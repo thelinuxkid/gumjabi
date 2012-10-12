@@ -42,7 +42,7 @@ setup(
     extras_require=EXTRAS_REQUIRES,
     entry_points={
         'console_scripts': [
-            'tle = tle.cli.glue_api:main[web]',
+            'glue-api = tle.cli.glue_api:main[web]',
             ],
         },
     )
