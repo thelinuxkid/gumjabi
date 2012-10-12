@@ -4,7 +4,11 @@ from setuptools import setup, find_packages
 EXTRAS_REQUIRES = dict(
     web=[
         'bottle>=0.11',
-        ],
+        'paste>=1.7.5.1',
+    ],
+    mongo=[
+        'pymongo>=2.3',
+    ],
     test=[
         'pytest>=2.2.4',
         'mock>=0.8.0',
