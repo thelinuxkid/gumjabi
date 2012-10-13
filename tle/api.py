@@ -11,6 +11,9 @@ from paste.translogger import TransLogger
 
 log = logging.getLogger(__name__)
 
+DEFAULT_FIRST_NAME = 'Friendly'
+DEFAULT_LAST_NAME = 'Human'
+
 class APILogger(TransLogger):
     def write_log(
         self,
@@ -54,6 +57,13 @@ def set_content(type_, charset='charset=UTF-8'):
         type_=type_,
         charset=charset,
         )
+
+def plain_content(fn):
+    @functools.wraps(fn)
+    def wrapper(*args, **kwargs):
+        set_content('text/plain')
+        return fn(*args, **kwargs)
+    return wrapper
 
 def json_content(fn):
     @functools.wraps(fn)
@@ -130,6 +140,7 @@ def update_key(fn):
 class EventAPI01(object):
     def __init__(self, colls):
         self._keys_coll = colls['keys']
+        self._urls_coll = colls['urls']
 
     def apply(self, callback, context):
         """
@@ -145,8 +156,55 @@ class EventAPI01(object):
             return callback(*args, **kwargs)
         return wrapper
 
-    @bottle.post('/webhook')
-    @bottle.post('/webhook/')
+    def _log_gumroad_param_error(self, param, form):
+        tmpl = (
+            'Gumroad did not provide {param} but it did '
+            'provide: {form}'
+        )
+        msg = tmpl.format(
+            param=param,
+            form=json.dumps(dict(form)),
+        )
+        log.error(msg)
+
+    @bottle.post('/gumroad/webhook')
+    @bottle.post('/gunroad/webhook/')
     @update_key
+    @plain_content
     def gumroad_webhook(self):
-        pass
+        form = bottle.request.forms
+        email = form.get('email')
+        price = form.get('price')
+        first_name = form.get('first_name')
+        last_name = form.get('last_name')
+        test = form.get('test')
+        urls = self._urls_coll.find_one('gumroad')
+
+        # Simpler than loading JSON for just this variable
+        if test == 'true':
+            return urls['test']
+        if not email:
+            return self._log_gumroad_param_error(
+                param='an email',
+                form=form,
+                url=urls['error'],
+            )
+            return urls['error']
+        if not price:
+            self._log_gumroad_param_error(
+                param='a price',
+                form=form,
+            )
+            return urls['error']
+        if not first_name:
+            first_name = DEFAULT_LAST_NAME
+        if not last_name:
+            last_name = DEFAULT_LAST_NAME
+
+        pdf = urls['pdf']
+        log.debug(
+            'Sending URL "{url}" to gumroad for redirection'.format(
+                url=pdf,
+            )
+        )
+        return pdf
