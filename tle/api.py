@@ -3,10 +3,11 @@ import logging
 import bottle
 import functools
 
+from datetime import datetime
+from collections import OrderedDict
+
 from paste import httpserver
 from paste.translogger import TransLogger
-
-from collections import OrderedDict
 
 log = logging.getLogger(__name__)
 
@@ -76,9 +77,59 @@ def api_error(error):
 
     return json.dumps(status)
 
+def update_key(fn):
+    @functools.wraps(fn)
+    def wrapper(*args, **kwargs):
+        key = bottle.request.query.key
+        # request.query returns empty if attr doesn't exist
+        if not key:
+            raise bottle.HTTPError(
+                status=403,
+                body='You must specify an API key',
+            )
+        host = bottle.request.environ.get('REMOTE_ADDR')
+        db_key = kwargs['self']._keys_coll.find_one(
+            OrderedDict([
+                ('hosts', host),
+                ]),
+        )
+        if db_key is None or db_key['disabled'] or key != db_key['key']:
+            raise bottle.HTTPError(
+                status=403,
+                body='Invalid API key',
+                )
+        res = fn(*args, **kwargs)
+        try:
+            now = datetime.utcnow()
+            kwargs['self']._keys_coll.update(
+                OrderedDict([
+                        ('hosts', host),
+                        ]),
+                OrderedDict([
+                        ('$set', OrderedDict([
+                                    ('last_used', now),
+                                    ])
+                         ),
+                        ('$inc', OrderedDict([
+                                    ('times_used', 1),
+                                    ])
+                         ),
+                        ]),
+                )
+        except Exception, e:
+            log.error(
+                'Could not update key for {host}: {e}'.format(
+                    host=host,
+                    e=str(e),
+                )
+            )
+        finally:
+            return res
+    return wrapper
+
 class EventAPI01(object):
-    def __init__(self):
-        pass
+    def __init__(self, colls):
+        self._keys_coll = colls['keys']
 
     def apply(self, callback, context):
         """
@@ -93,3 +144,9 @@ class EventAPI01(object):
             kwargs['self'] = self
             return callback(*args, **kwargs)
         return wrapper
+
+    @bottle.post('/webhook')
+    @bottle.post('/webhook/')
+    @update_key
+    def gumroad_webhook(self):
+        pass
