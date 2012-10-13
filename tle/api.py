@@ -178,6 +178,7 @@ class EventAPI01(object):
         first_name = form.get('first_name')
         last_name = form.get('last_name')
         test = form.get('test')
+        link = bottle.request.query.link
         urls = self._urls_coll.find_one('gumroad')
 
         # Simpler than loading JSON for just this variable
@@ -196,15 +197,27 @@ class EventAPI01(object):
                 form=form,
             )
             return urls['error']
+        if not link:
+            self._log_gumroad_param_error(
+                param='a link',
+                form=form,
+            )
+            return urls['error']
         if not first_name:
             first_name = DEFAULT_LAST_NAME
         if not last_name:
             last_name = DEFAULT_LAST_NAME
 
-        pdf = urls['pdf']
+        redirect = urls.get(link)
+        if not redirect:
+            msg = 'Could not find Gumroad link {link}'.format(
+                    link=link,
+            )
+            log.error(msg)
+            return urls['error']
         log.debug(
-            'Sending URL "{url}" to gumroad for redirection'.format(
-                url=pdf,
+            'Sending URL "{url}" to Gumroad for redirection'.format(
+                url=redirect,
             )
         )
-        return pdf
+        return redirect
