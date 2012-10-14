@@ -3,6 +3,8 @@ import pymongo
 
 from ConfigParser import SafeConfigParser
 
+DEFAULT_DB_HOST = 'localhost:27017'
+
 def abs_path(path):
     path = os.path.expanduser(path)
     path = os.path.abspath(path)
@@ -17,47 +19,43 @@ def config_parser(path):
 
     return config
 
-def _db_config_parts(
-    path,
-    host='localhost:27017',
-    ):
+def _db_config_parts(path):
     config = config_parser(path)
 
-    connection = dict(config.items('connection'))
-    if 'host' not in connection:
-        connection['host'] =  host
+    conn = dict(config.items('connection'))
+    if 'host' not in conn:
+        conn['host'] =  DEFAULT_DB_HOST
 
-    collections = dict(config.items('collection'))
+    colls = dict(config.items('collection'))
 
-    return connection, collections
+    return (conn, colls)
 
 def collections(
     config,
     read_preference=None,
     ):
-    connection, collections = _db_config_parts(config)
-    host = connection['host']
-    replica_set = connection.get('replica-set')
-    database = connection['database']
+    (conn, colls) = _db_config_parts(config)
+    host = conn['host']
+    replica_set = conn.get('replica-set')
+    db = conn['database']
 
     if replica_set:
-        connection = pymongo.ReplicaSetConnection(
+        conn = pymongo.ReplicaSetConnection(
             host,
             replicaSet=replica_set,
             )
         # ReadPreference.PRIMARY is the default
         if read_preference is not None:
-            connection.read_preference = read_preference
+            conn.read_preference = read_preference
     else:
-        connection = pymongo.Connection(host)
+        conn = pymongo.Connection(host)
 
-    database = connection[database]
-    collections = dict(
-        [(k,database[v])
+    db = conn[db]
+    colls = dict(
+        [(k,db[v])
          for k,v
-         in collections.items()
+         in colls.items()
          ]
         )
-    collections['database'] = database
 
-    return collections
+    return colls
