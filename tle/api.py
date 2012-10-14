@@ -9,6 +9,8 @@ from collections import OrderedDict
 from paste import httpserver
 from paste.translogger import TransLogger
 
+from tle.util import mongo
+
 log = logging.getLogger(__name__)
 
 DEFAULT_FIRST_NAME = 'Friendly'
@@ -141,6 +143,7 @@ class EventAPI01(object):
     def __init__(self, colls):
         self._keys_coll = colls['keys']
         self._urls_coll = colls['urls']
+        self._custs_coll = colls['custs']
 
     def apply(self, callback, context):
         """
@@ -219,5 +222,16 @@ class EventAPI01(object):
             'Sending URL "{url}" to Gumroad for redirection'.format(
                 url=redirect,
             )
+        )
+        kwargs = OrderedDict([
+            ('$inc', OrderedDict([
+                ('downloads', 1),
+            ]),
+         )
+        ])
+        mongo.safe_update(
+            self._custs_coll,
+            email,
+            **kwargs
         )
         return redirect
