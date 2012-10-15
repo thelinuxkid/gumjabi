@@ -142,7 +142,7 @@ def update_key(fn):
 class EventAPI01(object):
     def __init__(self, colls):
         self._keys_coll = colls['keys']
-        self._custs_coll = colls['custs']
+        self._cli_coll = colls['clients']
         self._gmrd_coll = colls['gumroad']
 
     def apply(self, callback, context):
@@ -233,7 +233,7 @@ class EventAPI01(object):
          )
         ])
         mongo.safe_upsert(
-            self._custs_coll,
+            self._cli_coll,
             email,
             **kwargs
         )
