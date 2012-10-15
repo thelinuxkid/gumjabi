@@ -223,7 +223,7 @@ class EventAPI01(object):
                 url=redirect,
             )
         )
-        key = 'downloads.{price}'.format(price=price)
+        key = 'downloads.{link}'.format(link=link)
         kwargs = OrderedDict([
             ('$inc', OrderedDict([
                 (key, 1),
