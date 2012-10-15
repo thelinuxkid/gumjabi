@@ -2,6 +2,7 @@ import json
 import logging
 import bottle
 import functools
+import requests
 
 from datetime import datetime
 from collections import OrderedDict
@@ -144,6 +145,7 @@ class EventAPI01(object):
         self._keys_coll = colls['keys']
         self._cli_coll = colls['clients']
         self._gmrd_coll = colls['gumroad']
+        self._kjb_coll = colls['kajabi']
 
     def apply(self, callback, context):
         """
@@ -159,10 +161,109 @@ class EventAPI01(object):
             return callback(*args, **kwargs)
         return wrapper
 
+    def _create_kajabi_customer(
+            self,
+            email,
+            first_name,
+            last_name,
+            link,
+            kajabi,
+            ):
+        # TODO make this asynchronous
+        # TODO Allow for multiple users with different keys and urls
+        meta = self._kjb_coll.find_one('meta')
+        api_key = meta.get('api_key')
+        # None and empty are both bad
+        if not api_key:
+            log.error('Could not find a kajabi api key')
+            return False
+        url = meta.get('url')
+        # None and empty are both bad
+        if not url:
+            log.error('Could not find a kajabi url')
+            return False
+        # None and empty are both bad
+        if not kajabi:
+            log.error(
+                'Could not find kajabi info for link {link}'.format(
+                    link=link,
+                )
+            )
+            return False
+        funnel = kajabi.get('funnel')
+        # None and empty are both bad
+        if not funnel:
+            log.error(
+                'Could not find a funnel for link {link}'.format(
+                    link=link,
+                )
+            )
+            return False
+        offer = kajabi.get('offer')
+        # None and empty are both bad
+        if not offer:
+            log.error(
+                'Could not find an offer for link {link}'.format(
+                    link=link,
+                )
+            )
+            return False
+        # id can be omitted
+        params = OrderedDict([
+            ('api_key', api_key),
+            ('kjbf', funnel),
+            ('kjbo', offer),
+            ('email', email),
+            ('first_name', first_name),
+            ('last_name', last_name),
+        ])
+        log.info(
+            'Creating Kajabi account for email {email} and link '
+            '{link}'.format(
+                email=email,
+                link=link,
+            )
+        )
+        res = requests.post(url, params=params)
+        if res.text != '1' or res.status_code != 200:
+            msg = (
+                'Kajabi account creation for email {email}, '
+                'and link {link} failed with status code '
+                '{code}'.format(
+                    email=email,
+                    link=link,
+                    code=res.status_code,
+                    )
+                )
+            log.error(msg)
+            return False
+        log.debug(
+            'Received an OK response from Kajabi while creating an '
+            'account for {email} and link {link}'.format(
+                email=email,
+                link=link,
+            )
+        )
+        return True
+
+    def _inc_downloads(self, email, link):
+        key = 'redirections.{link}'.format(link=link)
+        kwargs = OrderedDict([
+            ('$inc', OrderedDict([
+                (key, 1),
+            ]),
+         )
+        ])
+        mongo.safe_upsert(
+            self._cli_coll,
+            email,
+            **kwargs
+        )
+
     def _log_gumroad_param_error(self, param, form):
         tmpl = (
             'Gumroad did not provide {param} but it did '
-            'provide: {form}'
+            'provide: {form}. Returning error URL for redirection.'
         )
         msg = tmpl.format(
             param=param,
@@ -189,6 +290,7 @@ class EventAPI01(object):
 
         # Simpler than loading JSON for just this variable
         if test == 'true':
+            log.info('Returning test URL for redirection')
             return test_redir
         if not email:
             self._log_gumroad_param_error(
@@ -209,32 +311,38 @@ class EventAPI01(object):
             )
             return error_redir
         if not first_name:
-            first_name = DEFAULT_LAST_NAME
+            first_name = DEFAULT_FIRST_NAME
         if not last_name:
             last_name = DEFAULT_LAST_NAME
 
         dblink = links.get(link)
+        # None and empty are both bad
         if not dblink:
             msg = 'Could not find Gumroad link {link}'.format(
                     link=link,
             )
             log.error(msg)
-        redir = dblink['redirect']
+            return error_redir
+        redir = dblink.get('redirect')
+        # None and empty are both bad
+        if not redir:
+            msg = 'Could not find a redirect for link {link}'.format(
+                    link=link,
+            )
+            log.error(msg)
+            return error_redir
+        kajabi = dblink.get('kajabi')
+        self._create_kajabi_customer(
+            email,
+            first_name,
+            last_name,
+            link,
+            kajabi,
+        )
+        self._inc_downloads(email, link)
         log.debug(
-            'Sending URL "{redir}" to Gumroad for redirection'.format(
+            'Returning URL "{redir}" for redirection'.format(
                 redir=redir,
             )
-        )
-        key = 'downloads.{link}'.format(link=link)
-        kwargs = OrderedDict([
-            ('$inc', OrderedDict([
-                (key, 1),
-            ]),
-         )
-        ])
-        mongo.safe_upsert(
-            self._cli_coll,
-            email,
-            **kwargs
         )
         return redir
