@@ -142,8 +142,8 @@ def update_key(fn):
 class EventAPI01(object):
     def __init__(self, colls):
         self._keys_coll = colls['keys']
-        self._urls_coll = colls['urls']
         self._custs_coll = colls['custs']
+        self._gmrd_coll = colls['gumroad']
 
     def apply(self, callback, context):
         """
@@ -182,45 +182,47 @@ class EventAPI01(object):
         last_name = form.get('last_name')
         test = form.get('test')
         link = bottle.request.query.link
-        urls = self._urls_coll.find_one('gumroad')
+        # TODO Allow for multiple users with multiple links
+        links = self._gmrd_coll.find_one({'_id': 'links'})
+        test_redir = links['test']['redirect']
+        error_redir = links['error']['redirect']
 
         # Simpler than loading JSON for just this variable
         if test == 'true':
-            return urls['test']
+            return test_redir
         if not email:
-            return self._log_gumroad_param_error(
+            self._log_gumroad_param_error(
                 param='an email',
                 form=form,
-                url=urls['error'],
             )
-            return urls['error']
+            return error_redir
         if not price:
             self._log_gumroad_param_error(
                 param='a price',
                 form=form,
             )
-            return urls['error']
+            return error_redir
         if not link:
             self._log_gumroad_param_error(
                 param='a link',
                 form=form,
             )
-            return urls['error']
+            return error_redir
         if not first_name:
             first_name = DEFAULT_LAST_NAME
         if not last_name:
             last_name = DEFAULT_LAST_NAME
 
-        redirect = urls.get(link)
-        if not redirect:
+        dblink = links.get(link)
+        if not dblink:
             msg = 'Could not find Gumroad link {link}'.format(
                     link=link,
             )
             log.error(msg)
-            return urls['error']
+        redir = dblink['redirect']
         log.debug(
-            'Sending URL "{url}" to Gumroad for redirection'.format(
-                url=redirect,
+            'Sending URL "{redir}" to Gumroad for redirection'.format(
+                redir=redir,
             )
         )
         key = 'downloads.{link}'.format(link=link)
@@ -235,4 +237,4 @@ class EventAPI01(object):
             email,
             **kwargs
         )
-        return redirect
+        return redir
