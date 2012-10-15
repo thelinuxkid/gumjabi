@@ -5,6 +5,7 @@ EXTRAS_REQUIRES = dict(
     web=[
         'bottle>=0.11',
         'paste>=1.7.5.1',
+        'requests>=0.14.1',
     ],
     mongo=[
         'pymongo>=2.3',
