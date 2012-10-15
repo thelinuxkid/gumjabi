@@ -7,15 +7,12 @@ def create_indices(
     for index in indices:
         collection.ensure_index(index.items())
 
-def safe_update(
+def safe_upsert(
     coll,
     _id,
-    changes=None,
     **kwargs
     ):
-    if changes or kwargs:
-        if changes:
-            kwargs['$set'] = changes
+    if kwargs:
         coll.update(
             OrderedDict([
                 ('_id', _id),

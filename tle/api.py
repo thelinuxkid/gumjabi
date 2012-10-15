@@ -230,7 +230,7 @@ class EventAPI01(object):
             ]),
          )
         ])
-        mongo.safe_update(
+        mongo.safe_upsert(
             self._custs_coll,
             email,
             **kwargs
