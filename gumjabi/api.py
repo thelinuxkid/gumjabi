@@ -10,7 +10,7 @@ from collections import OrderedDict
 from paste import httpserver
 from paste.translogger import TransLogger
 
-from tle.util import mongo
+from gumjabi.util import mongo
 
 log = logging.getLogger(__name__)
 

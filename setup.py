@@ -26,11 +26,14 @@ for k,v in EXTRAS_REQUIRES.iteritems():
     EXTRAS_REQUIRES['test'] += v
 
 setup(
-    name='tle',
+    name='gumjabi',
     version='0.0.1',
-    description=('tle -- Glue code for TheLeanEntrepreneur between the '
-                 'Gumroad and Kajabi APIs'
-                 ),
+    description='Gumjabi -- Glue API between Gumroad and Kajabi APIs',
+    long_description=(
+        'Gumjabi -- Glue API which connects Gumroad webhooks with '
+        'Kajabi\'s custom cart integration. This allows a Gumroad '
+        'user to seamlessly create Kajabi accounts for a customer.'
+        ),
     author='Andres Buritica',
     author_email='andres@thelinuxkid.com',
     maintainer='Andres Buritica',
@@ -43,7 +46,7 @@ setup(
     extras_require=EXTRAS_REQUIRES,
     entry_points={
         'console_scripts': [
-            'glue-api = tle.cli.glue_api:main[web]',
+            'glue-api = gumjabi.cli.glue_api:main[web]',
             ],
         },
     )

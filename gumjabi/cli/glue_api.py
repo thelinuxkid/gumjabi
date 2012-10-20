@@ -4,12 +4,12 @@ import pymongo
 
 from paste.gzipper import middleware
 from bottle import install, run, default_app
-from tle.util.config import (
+from gumjabi.util.config import (
     config_parser,
     collections,
     )
-from tle.api import EventAPI01, APIServer
-from tle.util import mongo
+from gumjabi.api import EventAPI01, APIServer
+from gumjabi.util import mongo
 
 log = logging.getLogger(__name__)
 
