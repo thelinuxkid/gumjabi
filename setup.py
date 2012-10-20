@@ -1,5 +1,6 @@
 #!/usr/bin/python
 from setuptools import setup, find_packages
+import os
 
 EXTRAS_REQUIRES = dict(
     web=[
@@ -19,6 +20,12 @@ EXTRAS_REQUIRES = dict(
         ],
     )
 
+# Pypi package documentation
+root = os.path.dirname(__file__)
+path = os.path.join(root, 'README.rst')
+with open(path) as fp:
+    long_description = fp.read()
+
 # Tests always depend on all other requirements, except dev
 for k,v in EXTRAS_REQUIRES.iteritems():
     if k == 'test' or k == 'dev':
@@ -29,15 +36,13 @@ setup(
     name='gumjabi',
     version='0.0.1',
     description='Gumjabi -- Glue API between Gumroad and Kajabi APIs',
-    long_description=(
-        'Gumjabi -- Glue API which connects Gumroad webhooks with '
-        'Kajabi\'s custom cart integration. This allows a Gumroad '
-        'user to seamlessly create Kajabi accounts for a customer.'
-        ),
+    long_description=long_description,
     author='Andres Buritica',
     author_email='andres@thelinuxkid.com',
     maintainer='Andres Buritica',
     maintainer_email='andres@thelinuxkid.com',
+    url='https://github.com/thelinuxkid/gumjabi',
+    license='MIT',
     packages = find_packages(),
     test_suite='nose.collector',
     install_requires=[
