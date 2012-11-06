@@ -1,5 +1,3 @@
-from collections import OrderedDict
-
 def create_indices(
     collection,
     indices,
@@ -14,7 +12,7 @@ def safe_upsert(
     ):
     if kwargs:
         coll.update(
-            OrderedDict([
+            dict([
                 ('_id', _id),
             ]),
             kwargs,

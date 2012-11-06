@@ -5,7 +5,6 @@ import functools
 import requests
 
 from datetime import datetime
-from collections import OrderedDict
 
 from paste import httpserver
 from paste.translogger import TransLogger
@@ -80,11 +79,11 @@ def json_content(fn):
 @bottle.error(500)
 @json_content
 def api_error(error):
-    status = OrderedDict([
+    status = dict([
             ('code', error.status),
             ('message', error.body)
             ])
-    status = OrderedDict([
+    status = dict([
             ('status', status),
             ])
 
@@ -102,14 +101,14 @@ def update_key(fn):
             )
         if not kwargs['self']._restrict_host:
             db_key = kwargs['self']._keys_coll.find_one(
-                OrderedDict([
+                dict([
                     ('key', key),
                     ]),
             )
         else:
             host = bottle.request.environ.get('REMOTE_ADDR')
             db_key = kwargs['self']._keys_coll.find_one(
-                OrderedDict([
+                dict([
                     ('hosts', host),
                     ]),
             )
@@ -122,15 +121,15 @@ def update_key(fn):
         try:
             now = datetime.utcnow()
             kwargs['self']._keys_coll.update(
-                OrderedDict([
+                dict([
                         ('hosts', host),
                         ]),
-                OrderedDict([
-                        ('$set', OrderedDict([
+                dict([
+                        ('$set', dict([
                                     ('last_used', now),
                                     ])
                          ),
-                        ('$inc', OrderedDict([
+                        ('$inc', dict([
                                     ('times_used', 1),
                                     ])
                          ),
@@ -217,7 +216,7 @@ class EventAPI01(object):
             )
             return False
         # id can be omitted
-        params = OrderedDict([
+        params = dict([
             ('api_key', api_key),
             ('kjbf', funnel),
             ('kjbo', offer),
@@ -256,8 +255,8 @@ class EventAPI01(object):
 
     def _inc_downloads(self, email, link):
         key = 'redirections.{link}'.format(link=link)
-        kwargs = OrderedDict([
-            ('$inc', OrderedDict([
+        kwargs = dict([
+            ('$inc', dict([
                 (key, 1),
             ]),
          )
