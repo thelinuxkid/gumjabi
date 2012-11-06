@@ -63,7 +63,11 @@ def main():
         indices=indices,
         )
 
-    glue_api = EventAPI01(colls)
+    restrict = config.getboolean('api', 'restrict_host')
+    glue_api = EventAPI01(
+        colls,
+        restrict_host=restrict,
+    )
     install(glue_api)
     log.info(
         'Starting server http://{host}:{port}'.format(

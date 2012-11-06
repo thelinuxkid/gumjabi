@@ -100,17 +100,24 @@ def update_key(fn):
                 status=403,
                 body='You must specify an API key',
             )
-        host = bottle.request.environ.get('REMOTE_ADDR')
-        db_key = kwargs['self']._keys_coll.find_one(
-            OrderedDict([
-                ('hosts', host),
-                ]),
-        )
+        if not kwargs['self']._restrict_host:
+            db_key = kwargs['self']._keys_coll.find_one(
+                OrderedDict([
+                    ('key', key),
+                    ]),
+            )
+        else:
+            host = bottle.request.environ.get('REMOTE_ADDR')
+            db_key = kwargs['self']._keys_coll.find_one(
+                OrderedDict([
+                    ('hosts', host),
+                    ]),
+            )
         if db_key is None or db_key['disabled'] or key != db_key['key']:
             raise bottle.HTTPError(
                 status=403,
                 body='Invalid API key',
-                )
+            )
         res = fn(*args, **kwargs)
         try:
             now = datetime.utcnow()
@@ -141,11 +148,12 @@ def update_key(fn):
     return wrapper
 
 class EventAPI01(object):
-    def __init__(self, colls):
+    def __init__(self, colls, **kwargs):
         self._keys_coll = colls['keys']
         self._cli_coll = colls['clients']
         self._gmrd_coll = colls['gumroad']
         self._kjb_coll = colls['kajabi']
+        self._restrict_host = kwargs.get('restrict_host', False)
 
     def apply(self, callback, context):
         """
