@@ -220,12 +220,6 @@ class EventAPI01(object):
                 form=form,
             )
             return error_redir
-        if not price:
-            self._log_gumroad_param_error(
-                param='a price',
-                form=form,
-            )
-            return error_redir
         if not link:
             self._log_gumroad_param_error(
                 param='a link',
@@ -260,6 +254,7 @@ class EventAPI01(object):
                 ('last_name', last_name),
                 ('link', link),
                 ('requested_on', datetime.utcnow()),
+                ('price', price),
                 ]),
             )
         self._inc_downloads(email, link)
