@@ -8,8 +8,6 @@ from datetime import datetime
 from paste import httpserver
 from paste.translogger import TransLogger
 
-from gumjabi.util import mongo
-
 log = logging.getLogger(__name__)
 
 DEFAULT_FIRST_NAME = 'Friendly'
@@ -148,7 +146,6 @@ def update_key(fn):
 class EventAPI01(object):
     def __init__(self, colls, **kwargs):
         self._keys_coll = colls['keys']
-        self._cli_coll = colls['clients']
         self._gmrd_coll = colls['gumroad']
         self._kjb_coll = colls['kajabi']
         self._queue_coll = colls['kajabi_queue']
@@ -167,20 +164,6 @@ class EventAPI01(object):
             kwargs['self'] = self
             return callback(*args, **kwargs)
         return wrapper
-
-    def _inc_downloads(self, email, link):
-        key = 'redirections.{link}'.format(link=link)
-        kwargs = dict([
-            ('$inc', dict([
-                (key, 1),
-            ]),
-         )
-        ])
-        mongo.safe_upsert(
-            self._cli_coll,
-            email,
-            **kwargs
-        )
 
     def _log_gumroad_param_error(self, param, form):
         tmpl = (
@@ -257,7 +240,6 @@ class EventAPI01(object):
                 ('price', price),
                 ]),
             )
-        self._inc_downloads(email, link)
         log.debug(
             'Returning URL "{redir}" for redirection'.format(
                 redir=redir,
