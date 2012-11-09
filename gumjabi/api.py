@@ -149,9 +149,7 @@ def key_context(fn):
 
 class EventAPI01(object):
     def __init__(self, colls, **kwargs):
-        self._keys_coll = colls['keys']
-        self._gmrd_coll = colls['gumroad']
-        self._kjb_coll = colls['kajabi']
+        self._keys_coll = colls['api_keys']
         self._queue_coll = colls['kajabi_queue']
         self._restrict_host = kwargs.get('restrict_host', False)
 

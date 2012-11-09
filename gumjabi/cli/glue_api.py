@@ -58,7 +58,7 @@ def main():
         {'meta.hosts': pymongo.ASCENDING},
         ]
     mongo.create_indices(
-        collection=colls['keys'],
+        collection=colls['api_keys'],
         indices=indices,
         )
 
