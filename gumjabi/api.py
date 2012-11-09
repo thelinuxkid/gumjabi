@@ -192,7 +192,7 @@ class EventAPI01(object):
         link = bottle.request.query.link
         gmrd_key = kwargs['request_key']
         dbkey = self._keys_coll.find_one({'_id': gmrd_key})
-        links = dbkey['gumroad']
+        links = dbkey['links']
         test_redir = links['test']['redirect']
         error_redir = links['error']['redirect']
 
