@@ -49,6 +49,6 @@ def main():
         indices=indices,
         )
     if not create.create_all(colls):
-        delay = random.randint(10, 15)
+        delay = random.randint(5, 10)
         log.info('No work, sleeping %d seconds...', delay)
         time.sleep(delay)
