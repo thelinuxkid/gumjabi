@@ -6,6 +6,7 @@ EXTRAS_REQUIRES = dict(
     api=[
         'bottle>=0.11',
         'paste>=1.7.5.1',
+        'pyOpenSSL>=0.13',
     ],
     web=[
         'requests>=0.14.1',

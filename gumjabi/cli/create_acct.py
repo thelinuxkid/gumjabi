@@ -25,7 +25,7 @@ def main():
         )
     parser.add_argument(
         '--db-config',
-        help=('Path to the file with information on how to '
+        help=('path to the file with information on how to '
               'retrieve and store data in the database'
               ),
         required=True,
