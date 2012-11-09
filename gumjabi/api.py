@@ -96,38 +96,41 @@ def update_key(fn):
                 status=403,
                 body='You must specify an API key',
             )
-        if not kwargs['self']._restrict_host:
-            db_key = kwargs['self']._keys_coll.find_one(
-                dict([
-                    ('key', key),
-                    ]),
-            )
-        else:
-            host = bottle.request.environ.get('REMOTE_ADDR')
-            db_key = kwargs['self']._keys_coll.find_one(
-                dict([
-                    ('hosts', host),
-                    ]),
-            )
-        if db_key is None or db_key['disabled'] or key != db_key['key']:
+        db_key = kwargs['self']._keys_coll.find_one(
+            dict([
+                ('_id', key),
+                ]),
+        )
+        if (
+                db_key is None or
+                db_key['meta']['disabled'] or
+                key != db_key['_id']
+        ):
             raise bottle.HTTPError(
                 status=403,
                 body='Invalid API key',
             )
+        if kwargs['self']._restrict_host:
+            host = bottle.request.environ.get('REMOTE_ADDR')
+            if host not in db_key['meta']['hosts']:
+                raise bottle.HTTPError(
+                    status=403,
+                    body='Invalid API key',
+                )
         res = fn(*args, **kwargs)
         try:
             now = datetime.utcnow()
             kwargs['self']._keys_coll.update(
                 dict([
-                        ('hosts', host),
+                        ('meta.hosts', host),
                         ]),
                 dict([
                         ('$set', dict([
-                                    ('last_used', now),
+                                    ('meta.last_used', now),
                                     ])
                          ),
                         ('$inc', dict([
-                                    ('times_used', 1),
+                                    ('meta.times_used', 1),
                                     ])
                          ),
                         ]),

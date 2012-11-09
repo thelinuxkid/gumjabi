@@ -55,7 +55,7 @@ def main():
         config=args.db_config,
         )
     indices = [
-        {'hosts': pymongo.ASCENDING},
+        {'meta.hosts': pymongo.ASCENDING},
         ]
     mongo.create_indices(
         collection=colls['keys'],
