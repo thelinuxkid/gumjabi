@@ -58,7 +58,7 @@ def main():
         {'meta.hosts': pymongo.ASCENDING},
         ]
     mongo.create_indices(
-        collection=colls['api_keys'],
+        collection=colls['gumroad_keys'],
         indices=indices,
         )
 
