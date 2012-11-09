@@ -3,9 +3,11 @@ from setuptools import setup, find_packages
 import os
 
 EXTRAS_REQUIRES = dict(
-    web=[
+    api=[
         'bottle>=0.11',
         'paste>=1.7.5.1',
+    ],
+    web=[
         'requests>=0.14.1',
     ],
     mongo=[
@@ -51,7 +53,8 @@ setup(
     extras_require=EXTRAS_REQUIRES,
     entry_points={
         'console_scripts': [
-            'glue-api = gumjabi.cli.glue_api:main[web]',
+            'glue-api = gumjabi.cli.glue_api:main[api,mongo]',
+            'create-acct = gumjabi.cli.create_acct:main[web,mongo]',
             ],
         },
     classifiers=[

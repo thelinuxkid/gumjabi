@@ -2,7 +2,6 @@ import json
 import logging
 import bottle
 import functools
-import requests
 
 from datetime import datetime
 
@@ -152,6 +151,7 @@ class EventAPI01(object):
         self._cli_coll = colls['clients']
         self._gmrd_coll = colls['gumroad']
         self._kjb_coll = colls['kajabi']
+        self._queue_coll = colls['kajabi_queue']
         self._restrict_host = kwargs.get('restrict_host', False)
 
     def apply(self, callback, context):
@@ -167,91 +167,6 @@ class EventAPI01(object):
             kwargs['self'] = self
             return callback(*args, **kwargs)
         return wrapper
-
-    def _create_kajabi_customer(
-            self,
-            email,
-            first_name,
-            last_name,
-            link,
-            kajabi,
-            ):
-        # TODO make this asynchronous
-        # TODO Allow for multiple users with different keys and urls
-        meta = self._kjb_coll.find_one('meta')
-        api_key = meta.get('api_key')
-        # None and empty are both bad
-        if not api_key:
-            log.error('Could not find a kajabi api key')
-            return False
-        url = meta.get('url')
-        # None and empty are both bad
-        if not url:
-            log.error('Could not find a kajabi url')
-            return False
-        # None and empty are both bad
-        if not kajabi:
-            log.error(
-                'Could not find kajabi info for link {link}'.format(
-                    link=link,
-                )
-            )
-            return False
-        funnel = kajabi.get('funnel')
-        # None and empty are both bad
-        if not funnel:
-            log.error(
-                'Could not find a funnel for link {link}'.format(
-                    link=link,
-                )
-            )
-            return False
-        offer = kajabi.get('offer')
-        # None and empty are both bad
-        if not offer:
-            log.error(
-                'Could not find an offer for link {link}'.format(
-                    link=link,
-                )
-            )
-            return False
-        # id can be omitted
-        params = dict([
-            ('api_key', api_key),
-            ('kjbf', funnel),
-            ('kjbo', offer),
-            ('email', email),
-            ('first_name', first_name),
-            ('last_name', last_name),
-        ])
-        log.info(
-            'Creating Kajabi account for email {email} and link '
-            '{link}'.format(
-                email=email,
-                link=link,
-            )
-        )
-        res = requests.post(url, params=params)
-        if res.text != '1' or res.status_code != 200:
-            msg = (
-                'Kajabi account creation for email {email}, '
-                'and link {link} failed with status code '
-                '{code}'.format(
-                    email=email,
-                    link=link,
-                    code=res.status_code,
-                    )
-                )
-            log.error(msg)
-            return False
-        log.debug(
-            'Received an OK response from Kajabi while creating an '
-            'account for {email} and link {link}'.format(
-                email=email,
-                link=link,
-            )
-        )
-        return True
 
     def _inc_downloads(self, email, link):
         key = 'redirections.{link}'.format(link=link)
@@ -338,14 +253,15 @@ class EventAPI01(object):
             )
             log.error(msg)
             return error_redir
-        kajabi = dblink.get('kajabi')
-        self._create_kajabi_customer(
-            email,
-            first_name,
-            last_name,
-            link,
-            kajabi,
-        )
+        self._queue_coll.insert(
+            dict([
+                ('email', email),
+                ('first_name', first_name),
+                ('last_name', last_name),
+                ('link', link),
+                ('requested_on', datetime.utcnow()),
+                ]),
+            )
         self._inc_downloads(email, link)
         log.debug(
             'Returning URL "{redir}" for redirection'.format(
