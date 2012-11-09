@@ -1,7 +1,6 @@
 import logging
 import json
 import pymongo
-import requests
 
 from datetime import datetime
 
@@ -70,7 +69,7 @@ def _log_failed_error(msg):
     )
     log.error(msg)
 
-def create_one(colls, item):
+def create_one(colls, item, session):
     keys_coll = colls['gumroad_keys']
     email = item.get('email')
     first_name = item.get('first_name')
@@ -174,7 +173,7 @@ def create_one(colls, item):
             link=link,
         )
     )
-    res = requests.post(url, params=params)
+    res = session.post(url, params=params)
     if res.text != '1' or res.status_code != 200:
         msg = (
             'Kajabi account creation for email {email}, '
@@ -197,7 +196,7 @@ def create_one(colls, item):
     )
     return True
 
-def create_all(colls):
+def create_all(colls, session):
     queue_coll = colls['kajabi_queue']
     cursor = queue_coll.find(
         dict([
@@ -209,5 +208,5 @@ def create_all(colls):
     )
     work = False
     for item in cursor:
-        work = create_one(colls, item)
+        work = create_one(colls, item, session)
     return work
