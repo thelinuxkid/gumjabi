@@ -86,7 +86,7 @@ def api_error(error):
 
     return json.dumps(status)
 
-def update_key(fn):
+def key_context(fn):
     @functools.wraps(fn)
     def wrapper(*args, **kwargs):
         key = bottle.request.query.key
@@ -117,6 +117,7 @@ def update_key(fn):
                     status=403,
                     body='Invalid API key',
                 )
+        kwargs['request_key'] = key
         res = fn(*args, **kwargs)
         try:
             now = datetime.utcnow()
@@ -181,9 +182,9 @@ class EventAPI01(object):
 
     @bottle.post('/gumroad/webhook')
     @bottle.post('/gunroad/webhook/')
-    @update_key
+    @key_context
     @plain_content
-    def gumroad_webhook(self):
+    def gumroad_webhook(self, **kwargs):
         form = bottle.request.forms
         email = form.get('email')
         price = form.get('price')
@@ -191,8 +192,9 @@ class EventAPI01(object):
         last_name = form.get('last_name')
         test = form.get('test')
         link = bottle.request.query.link
-        # TODO Allow for multiple users with multiple links
-        links = self._gmrd_coll.find_one({'_id': 'links'})
+        gmrd_key = kwargs['request_key']
+        dbkey = self._keys_coll.find_one({'_id': gmrd_key})
+        links = dbkey['gumroad']
         test_redir = links['test']['redirect']
         error_redir = links['error']['redirect']
 
@@ -235,6 +237,7 @@ class EventAPI01(object):
             return error_redir
         self._queue_coll.insert(
             dict([
+                ('gumroad_key', gmrd_key),
                 ('email', email),
                 ('first_name', first_name),
                 ('last_name', last_name),
