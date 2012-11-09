@@ -37,7 +37,7 @@ for k,v in EXTRAS_REQUIRES.iteritems():
 
 setup(
     name='gumjabi',
-    version='0.0.1',
+    version='0.0.2',
     description='Gumjabi -- Glue API between Gumroad and Kajabi APIs',
     long_description=long_description,
     author='Andres Buritica',
