@@ -43,16 +43,6 @@ def main():
         metavar='PATH',
         type=str,
         )
-    parser.add_argument(
-        '-s',
-        '--ssl-pem',
-        metavar='PATH',
-        type=str,
-        help=(
-            'optional path to a PEM certificate. If provided SSL will '
-            'be enabled.'
-        ),
-    )
     args = parser.parse_args()
     logging.basicConfig(
         level=logging.DEBUG if args.verbose else logging.INFO,
@@ -62,6 +52,7 @@ def main():
     config = config_parser(args.config)
     host = config.get('connection', 'host')
     port = config.get('connection', 'port')
+    pem = config.get('connection', 'ssl_pem')
     colls = collections(
         config=args.db_config,
         )
@@ -89,9 +80,9 @@ def main():
     server_opts = dict([
         ('quiet', True),
         ])
-    if args.ssl_pem:
-        ssl_pem = abs_path(args.ssl_pem)
-        server_opts['ssl_pem'] = ssl_pem
+    if pem:
+        pem = abs_path(pem)
+        server_opts['ssl_pem'] = pem
     run(app=app,
         host=host,
         port=port,
