@@ -31,7 +31,7 @@ def _mark_for_retry(colls, item, msg):
     if retries and retries >= MAX_RETRIES:
         msg = (
             'Queue item {_id} has been tried {max_retries} '
-            'times.'.format(
+            'times'.format(
                 _id=item['_id'],
                 max_retries=MAX_RETRIES,
             )
@@ -59,28 +59,24 @@ def _mark_for_retry(colls, item, msg):
     )
 
 def _log_retry_error(msg):
-    msg = '{msg} Marking for retry.'.format(
+    msg = '{msg}. Marking for retry.'.format(
         msg=msg,
     )
     log.error(msg)
 
 def _log_failed_error(msg):
-    msg = '{msg} Marking as failed.'.format(
+    msg = '{msg}. Marking as failed.'.format(
         msg=msg,
     )
     log.error(msg)
 
-def create_one(
-        colls,
-        item,
-        api_key,
-        url,
-):
-    gmrd_coll = colls['gumroad']
+def create_one(colls, item):
+    keys_coll = colls['gumroad_keys']
     email = item.get('email')
     first_name = item.get('first_name')
     last_name = item.get('last_name')
     link = item.get('link')
+    gmrd_key = item.get('gumroad_key')
 
     if not (email and first_name and last_name and link):
         missing = dict([
@@ -89,43 +85,73 @@ def create_one(
             ('last_name', last_name),
             ('link', link),
         ])
-        msg = 'Found incomplete request in queue {missing}.'.format(
+        msg = 'Found incomplete request in queue {missing}'.format(
             missing=json.dumps(missing)
         )
         _log_failed_error(msg)
         _mark_failed(colls, item, msg)
         return False
-    dblink = gmrd_coll.find_one({'_id': 'links'})
-    dblink = dblink.get(link)
+    if not gmrd_key:
+        msg = (
+            'Found invalid Gumroad API key in queue item '
+            '{_id}'.format(
+                _id=item['_id']
+            )
+        )
+        _log_failed_error(msg)
+        _mark_failed(colls, item, msg)
+        return False
+
+    dbkey = keys_coll.find_one({'_id': gmrd_key})
+    api_key = dbkey.get('kajabi_key')
+    if not api_key:
+        msg = (
+            'Could not find a Kajabi API key for queue item '
+            '{_id}'.format(
+                _id=item['_id']
+            )
+        )
+        _log_retry_error(msg)
+        _mark_for_retry(colls, item, msg)
+        return False
+    url = dbkey.get('kajabi_url')
+    if not url:
+        msg = (
+            'Could not find a Kajabi URL for queue item '
+            '{_id}'.format(
+                _id=item['_id']
+            )
+        )
+        _log_retry_error(msg)
+        _mark_for_retry(colls, item, msg)
+        return False
+    dblink = dbkey['links'].get(link)
     if not dblink:
-        msg = 'Could not find Gumroad link {link}.'.format(
+        msg = 'Could not find Gumroad link {link}'.format(
             link=link,
         )
         _log_retry_error(msg)
         _mark_for_retry(colls, item, msg)
         return False
     kajabi = dblink.get('kajabi')
-    # None and empty are both bad
     if not kajabi:
-        msg = 'Could not find kajabi info for link {link}.'.format(
+        msg = 'Could not find kajabi info for link {link}'.format(
             link=link,
         )
         _log_retry_error(msg)
         _mark_for_retry(colls, item, msg)
         return False
     funnel = kajabi.get('funnel')
-    # None and empty are both bad
     if not funnel:
-        msg = 'Could not find a funnel for link {link}.'.format(
+        msg = 'Could not find a funnel for link {link}'.format(
             link=link,
         )
         _log_retry_error(msg)
         _mark_for_retry(colls, item, msg)
         return False
     offer = kajabi.get('offer')
-    # None and empty are both bad
     if not offer:
-        msg = 'Could not find an offer for link {link}.'.format(
+        msg = 'Could not find an offer for link {link}'.format(
             link=link,
         )
         _log_retry_error(msg)
@@ -153,7 +179,7 @@ def create_one(
         msg = (
             'Kajabi account creation for email {email}, '
             'and link {link} failed with status code '
-            '{code}.'.format(
+            '{code}'.format(
                 email=email,
                 link=link,
                 code=res.status_code,
@@ -172,22 +198,7 @@ def create_one(
     return True
 
 def create_all(colls):
-    kjb_coll = colls['kajabi']
     queue_coll = colls['kajabi_queue']
-
-    # TODO Allow for multiple users with different keys and urls
-    meta = kjb_coll.find_one('meta')
-    api_key = meta.get('api_key')
-    # None and empty are both bad
-    if not api_key:
-        log.error('Could not find a kajabi api key')
-        return False
-    url = meta.get('url')
-    # None and empty are both bad
-    if not url:
-        log.error('Could not find a kajabi url')
-        return False
-
     cursor = queue_coll.find(
         dict([
             ('gave_up', dict([('$exists', False)])),
@@ -198,10 +209,5 @@ def create_all(colls):
     )
     work = False
     for item in cursor:
-        work = create_one(
-            colls,
-            item,
-            api_key,
-            url,
-            )
+        work = create_one(colls, item)
     return work
