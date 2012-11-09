@@ -1,7 +1,7 @@
 import os
 import pymongo
 
-from ConfigParser import SafeConfigParser
+from ConfigParser import SafeConfigParser, NoOptionError
 
 DEFAULT_DB_HOST = 'localhost:27017'
 
@@ -10,6 +10,12 @@ def abs_path(path):
     path = os.path.abspath(path)
 
     return path
+
+def config_option(fn, section, option):
+    try:
+        return fn(section, option)
+    except NoOptionError:
+        return None
 
 def config_parser(path):
     path = abs_path(path)

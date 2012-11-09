@@ -10,7 +10,7 @@ from gumjabi.util.config import (
     )
 from gumjabi.api import EventAPI01, APIServer
 from gumjabi.util import mongo
-from gumjabi.util.config import abs_path
+from gumjabi.util.config import abs_path, config_option
 
 log = logging.getLogger(__name__)
 
@@ -52,7 +52,7 @@ def main():
     config = config_parser(args.config)
     host = config.get('connection', 'host')
     port = config.get('connection', 'port')
-    pem = config.get('connection', 'ssl_pem')
+    pem = config_option(config.get, 'connection', 'ssl_pem')
     colls = collections(
         config=args.db_config,
         )
@@ -64,7 +64,13 @@ def main():
         indices=indices,
         )
 
-    restrict = config.getboolean('api', 'restrict_host')
+    restrict = config_option(
+        config.getboolean,
+        'api',
+        'restrict_host',
+    )
+    if restrict is None:
+        restrict = False
     glue_api = EventAPI01(
         colls,
         restrict_host=restrict,
