@@ -189,7 +189,7 @@ class EventAPI01(object):
         first_name = form.get('first_name')
         last_name = form.get('last_name')
         test = form.get('test')
-        link = bottle.request.query.link
+        link = form.get('permalink')
         gmrd_key = kwargs['request_key']
         dbkey = self._keys_coll.find_one({'_id': gmrd_key})
         links = dbkey['links']
