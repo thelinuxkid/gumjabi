@@ -71,21 +71,28 @@ def json_content(fn):
         return fn(*args, **kwargs)
     return wrapper
 
-@bottle.error(400)
-@bottle.error(403)
-@bottle.error(404)
-@bottle.error(500)
-@json_content
-def api_error(error):
+def api_response(message, code=200):
     status = dict([
-            ('code', error.status),
-            ('message', error.body)
+            ('message', message),
+            ('code', code),
             ])
     status = dict([
             ('status', status),
             ])
 
     return json.dumps(status)
+
+@bottle.error(400)
+@bottle.error(403)
+@bottle.error(404)
+@bottle.error(500)
+@json_content
+def api_error(error):
+    res = api_response(
+        error.body,
+        error.status_code,
+    )
+    return res
 
 def key_context(fn):
     @functools.wraps(fn)
@@ -234,10 +241,7 @@ class EventAPI01(object):
         # Simpler than loading JSON for just this variable
         if test == 'true':
             log.debug('Test request successful')
-            res = dict(
-                [('message', 'test')]
-            )
-            return json.dumps(res)
+            return api_response('Test successful')
         log.debug(
             'Queueing {email} for Kajabi account '
             'creation'.format(
@@ -255,7 +259,4 @@ class EventAPI01(object):
                 ('price', price),
                 ]),
             )
-        res = dict(
-            [('message', 'success')]
-        )
-        return json.dumps(res)
+        return api_response('Success')
