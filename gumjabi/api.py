@@ -194,6 +194,7 @@ class EventAPI01(object):
         form = bottle.request.forms
         email = form.get('email')
         price = form.get('price')
+        currency = form.get('currency')
         first_name = form.get('First Name')
         last_name = form.get('Last Name')
         test = form.get('test')
@@ -257,6 +258,7 @@ class EventAPI01(object):
                 ('link', link),
                 ('requested_on', datetime.utcnow()),
                 ('price', price),
+                ('currency', currency),
                 ]),
             )
         return api_response('Success')

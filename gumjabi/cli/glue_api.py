@@ -7,10 +7,11 @@ from bottle import install, run, default_app
 from gumjabi.util.config import (
     config_parser,
     collections,
+    abs_path,
+    config_option,
     )
 from gumjabi.api import EventAPI01, APIServer
 from gumjabi.util import mongo
-from gumjabi.util.config import abs_path, config_option
 
 log = logging.getLogger(__name__)
 
