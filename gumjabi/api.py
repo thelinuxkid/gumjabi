@@ -194,8 +194,8 @@ class EventAPI01(object):
         form = bottle.request.forms
         email = form.get('email')
         price = form.get('price')
-        first_name = form.get('first_name')
-        last_name = form.get('last_name')
+        first_name = form.get('First Name')
+        last_name = form.get('Last Name')
         test = form.get('test')
         link = form.get('permalink')
         gmrd_key = kwargs['request_key']
