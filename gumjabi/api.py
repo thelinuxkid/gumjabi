@@ -196,10 +196,6 @@ class EventAPI01(object):
         test_redir = links['test']['redirect']
         error_redir = links['error']['redirect']
 
-        # Simpler than loading JSON for just this variable
-        if test == 'true':
-            log.info('Returning test URL for redirection')
-            return test_redir
         if not email:
             self._log_gumroad_param_error(
                 param='an email',
@@ -233,6 +229,10 @@ class EventAPI01(object):
             )
             log.error(msg)
             return error_redir
+        # Simpler than loading JSON for just this variable
+        if test == 'true':
+            log.info('Returning test URL for redirection')
+            return test_redir
         self._queue_coll.insert(
             dict([
                 ('gumroad_key', gmrd_key),
