@@ -71,8 +71,9 @@ def json_content(fn):
         return fn(*args, **kwargs)
     return wrapper
 
-@bottle.error(404)
+@bottle.error(400)
 @bottle.error(403)
+@bottle.error(404)
 @bottle.error(500)
 @json_content
 def api_error(error):
@@ -170,7 +171,7 @@ class EventAPI01(object):
     def _log_gumroad_param_error(self, param, form):
         tmpl = (
             'Gumroad did not provide {param} but it did '
-            'provide: {form}. Returning error URL for redirection.'
+            'provide: {form}.'
         )
         msg = tmpl.format(
             param=param,
@@ -181,7 +182,7 @@ class EventAPI01(object):
     @bottle.post('/gumroad/webhook')
     @bottle.post('/gunroad/webhook/')
     @key_context
-    @plain_content
+    @json_content
     def gumroad_webhook(self, **kwargs):
         form = bottle.request.forms
         email = form.get('email')
@@ -192,47 +193,57 @@ class EventAPI01(object):
         link = form.get('permalink')
         gmrd_key = kwargs['request_key']
         dbkey = self._keys_coll.find_one({'_id': gmrd_key})
-        links = dbkey['links']
-        test_redir = links['test']['redirect']
-        error_redir = links['error']['redirect']
+        dblink = dbkey['links'].get(link)
 
-        if not email:
-            self._log_gumroad_param_error(
-                param='an email',
-                form=form,
-            )
-            return error_redir
+        # None and empty are both bad
         if not link:
             self._log_gumroad_param_error(
                 param='a link',
                 form=form,
             )
-            return error_redir
-        if not first_name:
-            first_name = DEFAULT_FIRST_NAME
-        if not last_name:
-            last_name = DEFAULT_LAST_NAME
-
-        dblink = links.get(link)
-        # None and empty are both bad
+            raise bottle.HTTPError(
+                status=400,
+                body='Parameter missing: permalink',
+            )
         if not dblink:
             msg = 'Could not find Gumroad link {link}'.format(
                     link=link,
             )
             log.error(msg)
-            return error_redir
-        redir = dblink.get('redirect')
-        # None and empty are both bad
-        if not redir:
-            msg = 'Could not find a redirect for link {link}'.format(
+            body = 'Invalid permalink: {link}'.format(
                     link=link,
             )
-            log.error(msg)
-            return error_redir
+            raise bottle.HTTPError(
+                status=400,
+                body=body,
+            )
+        if not email:
+            self._log_gumroad_param_error(
+                param='an email',
+                form=form,
+            )
+            raise bottle.HTTPError(
+                status=400,
+                body='Parameter missing: email',
+            )
+        if not first_name:
+            first_name = DEFAULT_FIRST_NAME
+        if not last_name:
+            last_name = DEFAULT_LAST_NAME
+
         # Simpler than loading JSON for just this variable
         if test == 'true':
-            log.info('Returning test URL for redirection')
-            return test_redir
+            log.debug('Test request successful')
+            res = dict(
+                [('message', 'test')]
+            )
+            return json.dumps(res)
+        log.debug(
+            'Queueing {email} for Kajabi account '
+            'creation'.format(
+                email=email,
+            )
+        )
         self._queue_coll.insert(
             dict([
                 ('gumroad_key', gmrd_key),
@@ -244,9 +255,7 @@ class EventAPI01(object):
                 ('price', price),
                 ]),
             )
-        log.debug(
-            'Returning URL "{redir}" for redirection'.format(
-                redir=redir,
-            )
+        res = dict(
+            [('message', 'success')]
         )
-        return redir
+        return json.dumps(res)
