@@ -16,18 +16,21 @@ purchaser and give them access to a Kajabi funnel/offer.
 
 Gumjabi is made up of two services. The `REST API`_ listens for POST
 requests from the Gumroad Ping API and puts the information provided
-in a queue. The `Account creation queue`_ processes the requests in the
+in a queue. The `Account creation service`_ processes the requests in the
 queue creating a Kajabi account with access to a funnel/offer for
 each. You must be familiar with the `Gumroad Ping API`_ and `Kajabi's
 custom cart integration`_ in order to use Gumjabi.
 
-Some parts of this documentation apply only to Unix systems.
+Some parts of this documentation apply only to Unix-like operating
+systems.
 
 Usage
 =====
 
-The Gumjabi API expects the API key in the query string and any fields
-provided by Gumroad as POST parameters.
+To use Gumjabi you must setup the `Gumroad Ping API`_ with the Gumjabi
+API URl using the endpoint /gumroad/ping. This endpoint expects the
+Gumjabi API key in the query string and any fields provided by Gumroad
+as POST form parameters.
 
 End points
 ----------
@@ -40,7 +43,7 @@ Required query parameters:
     key
        The Gumjabi API key
 
-Required POST parameters:
+Required POST form parameters:
 
     email
        The purchaser's email. The Kajabi account will be created using
@@ -50,7 +53,7 @@ Required POST parameters:
        The permalink the user followed to make the purchase on
        Gumroad. This permalink is tied to a Kajabi funnel/offer.
 
-Optional POST parameters:
+Optional POST form parameters:
 
     First Name
         The purchaser's first name. If it's not provided then
@@ -120,10 +123,10 @@ runit_ to run the Gumjabi services.
 REST API
 --------
 
-To start the API call the ``gumjabi-api`` command with the
-``--config`` and ``--db-config`` arguments::
+To start the API call the ``gumjabi-api`` cli with the ``--config``
+and ``--db-config`` arguments::
 
-    gumjabi-api --config=gumjabi-api.conf --db-config=mongodb.conf
+    .virtual/bin/gumjabi-api --config=gumjabi-api.conf --db-config=mongodb.conf
 
 ``gumjabi-api.conf`` looks like::
 
@@ -135,7 +138,7 @@ To start the API call the ``gumjabi-api`` command with the
       [api]
       restrict-hosts = <true|false>
 
-Use ``ssl-pem`` if you want to run the API with SSL enabled. If you
+Use ``ssl-pem`` if you want to enable SSL for the API. If you
 want to restrict the hosts which can make requests to the API set
 ``restrict-hosts`` to true (see `Database structures`_
 section). Neither option is required.
@@ -152,25 +155,22 @@ section). Neither option is required.
     kajabi-queue = <collection-name>
 
 The ``replica-set`` option is not necessary. If you are not using a
-replica set in your MongoDB setup omit this line. The collections used
-here are described in the `Database structures`_ section.
+replica set in your MongoDB setup then omit this line. The collections
+used here are described in the `Database structures`_ section.
 
-Refer to the `Usage`_ section for information on how to make requests
-to this API.
-
-Account creation queue
-----------------------
+Account creation service
+------------------------
 
 To process the requests in the queue and create the Kajabi accounts
-call the ``kajabi-queue`` command with the ``--db-config`` argument::
+call the ``kajabi-queue`` cli with the ``--db-config`` argument::
 
-    kajabi-queue --db-config=mongodb.conf
+    .virtual/bin/kajabi-queue --db-config=mongodb.conf
 
 ``mongodb.conf`` looks the same as above.
 
 ``kajabi-queue`` will retry failed account creation requests a few
 times before giving up. It will also restart every 5 to 10 seconds to
-look for new items in the queue.
+look for new items in the queue (as long as it's setup as a service).
 
 .. _dbstructures:
 
