@@ -21,10 +21,10 @@ stored in a MongoDB collection.
 API
 ---
 
-To start the API call the ``glue-api`` command with the ``--config`` and
-``--db-config`` arguments::
+To start the API call the ``gumjabi-api`` command with the
+``--config`` and ``--db-config`` arguments::
 
-    glue-api --config=gumjabi-api.conf --db-config=mongodb.conf
+    gumjabi-api --config=gumjabi-api.conf --db-config=mongodb.conf
 
 ``gumjabi-api.conf`` looks like::
 

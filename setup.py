@@ -54,7 +54,7 @@ setup(
     extras_require=EXTRAS_REQUIRES,
     entry_points={
         'console_scripts': [
-            'glue-api = gumjabi.cli.glue_api:main[api,mongo]',
+            'gumjabi-api = gumjabi.cli.gumjabi_api:main[api,mongo]',
             'create-acct = gumjabi.cli.create_acct:main[web,mongo]',
             ],
         },
