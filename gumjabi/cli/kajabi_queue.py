@@ -5,7 +5,7 @@ import logging
 import pymongo
 import requests
 
-from gumjabi import create
+from gumjabi import queue
 from gumjabi.util.config import (
     collections,
     )
@@ -50,7 +50,7 @@ def main():
         indices=indices,
         )
     session = requests.session()
-    if not create.create_all(colls, session):
+    if not queue.create_accts(colls, session):
         delay = random.randint(5, 10)
         log.info('No work, sleeping %d seconds...', delay)
         time.sleep(delay)

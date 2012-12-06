@@ -60,9 +60,9 @@ Account creation service
 ------------------------
 
 To monitor the queue which contains the Kajabi accounts to create call
-the ``create-acct`` command with the ``--db-config`` argument::
+the ``kajabi-queue`` command with the ``--db-config`` argument::
 
-    create-acct --db-config=mongodb.conf
+    kajabi-queue --db-config=mongodb.conf
 
 ``mongodb.conf`` looks the same as above.
 
@@ -135,9 +135,9 @@ directory. You can download the source from github_::
     # The test requirement installs all the dependencies. But,
     # depending on the cli you wish to run you might want to install
     # only the appropriate dependencies as listed in setup.py. For
-    # example to run create-acct you only need the mongo
-    # requirement which installs the pymongo dependency
-    .virtual/bin/pip install gumjabi[mongo]
+    # example to run kajabi-queue you need the mongo and web
+    # requirements which install the pymongo and requests dependencies
+    .virtual/bin/pip install gumjabi[web,mongo]
 
 If you like to use ipython you can install it with the dev
 requirement::

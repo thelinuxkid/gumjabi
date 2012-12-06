@@ -55,7 +55,7 @@ setup(
     entry_points={
         'console_scripts': [
             'gumjabi-api = gumjabi.cli.gumjabi_api:main[api,mongo]',
-            'create-acct = gumjabi.cli.create_acct:main[web,mongo]',
+            'kajabi-queue = gumjabi.cli.kajabi_queue:main[web,mongo]',
             ],
         },
     classifiers=[

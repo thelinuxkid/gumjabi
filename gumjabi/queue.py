@@ -196,7 +196,7 @@ def create_one(colls, item, session):
     )
     return True
 
-def create_all(colls, session):
+def create_accts(colls, session):
     queue_coll = colls['kajabi_queue']
     cursor = queue_coll.find(
         dict([
