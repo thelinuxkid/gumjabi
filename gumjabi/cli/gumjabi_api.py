@@ -61,7 +61,7 @@ def main():
         {'meta.hosts': pymongo.ASCENDING},
         ]
     mongo.create_indices(
-        collection=colls['gumroad_keys'],
+        collection=colls['gumjabi-keys'],
         indices=indices,
         )
 

@@ -163,8 +163,8 @@ def key_context(fn):
 
 class EventAPI01(object):
     def __init__(self, colls, **kwargs):
-        self._keys_coll = colls['gumroad_keys']
-        self._queue_coll = colls['kajabi_queue']
+        self._keys_coll = colls['gumjabi-keys']
+        self._queue_coll = colls['kajabi-queue']
         self._restrict_hosts = kwargs.get('restrict_hosts', False)
 
     def apply(self, callback, context):
@@ -205,8 +205,8 @@ class EventAPI01(object):
         last_name = form.get('Last Name')
         test = form.get('test')
         link = form.get('permalink')
-        gmrd_key = kwargs['request_key']
-        dbkey = self._keys_coll.find_one({'_id': gmrd_key})
+        gumjabi_key = kwargs['request_key']
+        dbkey = self._keys_coll.find_one({'_id': gumjabi_key})
         dblink = dbkey['links'].get(link)
 
         # None and empty are both bad
@@ -257,7 +257,7 @@ class EventAPI01(object):
         )
         self._queue_coll.insert(
             dict([
-                ('gumroad_key', gmrd_key),
+                ('gumjabi_key', gumjabi_key),
                 ('email', email),
                 ('first_name', first_name),
                 ('last_name', last_name),

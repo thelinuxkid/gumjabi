@@ -49,8 +49,8 @@ option is required.
     database = <database-name>
 
     [collection]
-    gumroad_keys = <collection-name>
-    kajabi_queue = <collection-name>
+    gumjabi-keys = <collection-name>
+    kajabi-queue = <collection-name>
 
 The ``replica-set`` option is not necessary. If you are not using a
 replica set in your MongoDB setup omit this line. The collections used
@@ -73,10 +73,10 @@ Database structures
 -------------------
 
 Gumjabi uses two MongoDB collections. The system uses the names
-kajabi_queue and gumroad_keys which are defined in
+kajabi-queue and gumjabi-keys which are defined in
 ``gumjabi-api.conf`` but you can name the actual collections anything
-you want. kajabi_queue is used as a queue for the Kajabi accounts that
-are to be created. gumroad_keys holds Gumroad and Kajabi information
+you want. kajabi-queue is used as a queue for the Kajabi accounts that
+are to be created. gumjabi-keys holds Gumroad and Kajabi information
 for each user and must be pre-populated.::
 
     {

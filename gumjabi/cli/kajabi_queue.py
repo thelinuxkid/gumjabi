@@ -46,7 +46,7 @@ def main():
         {'requested_on': pymongo.ASCENDING},
         ]
     mongo.create_indices(
-        collection=colls['kajabi_queue'],
+        collection=colls['kajabi-queue'],
         indices=indices,
         )
     session = requests.session()

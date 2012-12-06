@@ -11,7 +11,7 @@ from gumjabi.util import mongo
 log = logging.getLogger(__name__)
 
 def _mark_failed(colls, item, msg):
-    queue_coll = colls['kajabi_queue']
+    queue_coll = colls['kajabi-queue']
     kwargs = dict([
         ('$set', dict([
             ('gave_up_msg', msg),
@@ -39,7 +39,7 @@ def _mark_for_retry(colls, item, msg):
         _mark_failed(colls, item, msg)
         return
 
-    queue_coll = colls['kajabi_queue']
+    queue_coll = colls['kajabi-queue']
     kwargs = dict([
         ('$inc', dict([
             ('times_failed', 1),
@@ -70,12 +70,12 @@ def _log_failed_error(msg):
     log.error(msg)
 
 def create_one(colls, item, session):
-    keys_coll = colls['gumroad_keys']
+    keys_coll = colls['gumjabi-keys']
     email = item.get('email')
     first_name = item.get('first_name')
     last_name = item.get('last_name')
     link = item.get('link')
-    gmrd_key = item.get('gumroad_key')
+    gumjabi_key = item.get('gumjabi_key')
 
     if not (email and first_name and last_name and link):
         missing = dict([
@@ -90,9 +90,9 @@ def create_one(colls, item, session):
         _log_failed_error(msg)
         _mark_failed(colls, item, msg)
         return False
-    if not gmrd_key:
+    if not gumjabi_key:
         msg = (
-            'Found invalid Gumroad API key in queue item '
+            'Found invalid Gumjabi API key in queue item '
             '{_id}'.format(
                 _id=item['_id']
             )
@@ -101,9 +101,9 @@ def create_one(colls, item, session):
         _mark_failed(colls, item, msg)
         return False
 
-    dbkey = keys_coll.find_one({'_id': gmrd_key})
-    api_key = dbkey.get('kajabi_key')
-    if not api_key:
+    dbkey = keys_coll.find_one({'_id': gumjabi_key})
+    kajabi_key = dbkey.get('kajabi_key')
+    if not kajabi_key:
         msg = (
             'Could not find a Kajabi API key for queue item '
             '{_id}'.format(
@@ -159,7 +159,7 @@ def create_one(colls, item, session):
 
     # id can be omitted
     params = dict([
-        ('api_key', api_key),
+        ('kajabi_key', kajabi_key),
         ('kjbf', funnel),
         ('kjbo', offer),
         ('email', email),
@@ -197,7 +197,7 @@ def create_one(colls, item, session):
     return True
 
 def create_accts(colls, session):
-    queue_coll = colls['kajabi_queue']
+    queue_coll = colls['kajabi-queue']
     cursor = queue_coll.find(
         dict([
             ('gave_up', dict([('$exists', False)])),
