@@ -118,9 +118,15 @@ def key_context(fn):
                 status=403,
                 body='Invalid API key',
             )
-        if kwargs['self']._restrict_host:
+        if kwargs['self']._restrict_hosts:
             host = bottle.request.environ.get('REMOTE_ADDR')
             if host not in db_key['meta']['hosts']:
+                log.error(
+                    'Could not find host {host} for the specified '
+                    'API key'.format(
+                        host=host,
+                    )
+                )
                 raise bottle.HTTPError(
                     status=403,
                     body='Invalid API key',
@@ -159,7 +165,7 @@ class EventAPI01(object):
     def __init__(self, colls, **kwargs):
         self._keys_coll = colls['gumroad_keys']
         self._queue_coll = colls['kajabi_queue']
-        self._restrict_host = kwargs.get('restrict_host', False)
+        self._restrict_hosts = kwargs.get('restrict_hosts', False)
 
     def apply(self, callback, context):
         """

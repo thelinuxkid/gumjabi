@@ -68,13 +68,13 @@ def main():
     restrict = config_option(
         config.getboolean,
         'api',
-        'restrict_host',
+        'restrict-hosts',
     )
     if restrict is None:
         restrict = False
     glue_api = EventAPI01(
         colls,
-        restrict_host=restrict,
+        restrict_hosts=restrict,
     )
     install(glue_api)
     log.info(

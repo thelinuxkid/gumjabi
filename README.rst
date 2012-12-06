@@ -34,11 +34,11 @@ To start the API call the ``gumjabi-api`` command with the
       ssl_pem = <path_to_certificate>
 
       [api]
-      restrict_host = <true|false>
+      restrict-hosts = <true|false>
 
-Use ``ssl_pem`` if you want to run the API with SSL enabled. If you want
-to restrict the IP addresses which can make requests to the API set
-``restrict_host`` to true (see `Database structures`_ below). Neither
+Use ``ssl_pem`` if you want to run the API with SSL enabled. If you
+want to restrict the hosts which can make requests to the API set
+``restrict-hosts`` to true (see `Database structures`_ below). Neither
 option is required.
 
 ``mongodb.conf`` looks like::
@@ -84,8 +84,8 @@ for each user and must be pre-populated.::
       "kajabi_key": <Kajabi-API-key>,
       "kajabi_url": <Kajabi-API-URL>,
       "meta": {
-        "ips": [
-          <Gumroad-IP>,
+        "hosts": [
+          <Gumroad-host>,
           ...
         ],
         "disabled": <true|false>,
