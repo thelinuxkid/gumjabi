@@ -209,11 +209,11 @@ class EventAPI01(object):
         )
         log.error(msg)
 
-    @bottle.post('/gumroad/webhook')
-    @bottle.post('/gunroad/webhook/')
+    @bottle.post('/gumroad/ping')
+    @bottle.post('/gunroad/ping/')
     @key_context
     @json_content
-    def gumroad_webhook(self, **kwargs):
+    def gumroad_ping(self, **kwargs):
         form = bottle.request.forms
         email = form.pop('email', None)
         first_name = form.pop('First Name', None)
