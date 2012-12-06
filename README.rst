@@ -3,23 +3,122 @@ Gumjabi
 =======
 
 Gumjabi is a set of services which connect the `Gumroad Ping API`_
-with `Kajabi's custom cart integration`_. This allows Gumroad users
-to seamlessly create Kajabi accounts for their purchasers. You must be
-familiar with the `Gumroad Ping API`_ and `Kajabi's custom cart
-integration`_ in order to follow these instructions. The Installation_
-and Developing_ sections are written for Linux systems.
+with `Kajabi's custom cart integration`_. This allows Gumroad users to
+seamlessly share content on Kajabi with their purchasers.
 
-Design
-======
+Description
+===========
 
-Gumjabi is made up of two services. The Gumjabi API listens for POST
+A Gumroad permalink represents a product for a purchaser to buy. A
+Gumroad user wanting to give purchasers access to extra content on
+Kajabi can use Gumjabi to automatically create an account for each
+purchaser and give them access to a Kajabi funnel/offer.
+
+Gumjabi is made up of two services. The `REST API`_ listens for POST
 requests from the Gumroad Ping API and puts the information provided
-in a queue. The Kajabi account creation service then gets the queue
-items and creates the accounts, retrying if necessary. The queue is
-stored in a MongoDB collection.
+in a queue. The `Account creation queue`_ processes the requests in the
+queue creating a Kajabi account with access to a funnel/offer for
+each. You must be familiar with the `Gumroad Ping API`_ and `Kajabi's
+custom cart integration`_ in order to use Gumjabi.
 
-API
----
+Some parts of this documentation apply only to Unix systems.
+
+Usage
+=====
+
+The Gumjabi API expects the API key in the query string and any fields
+provided by Gumroad as POST parameters.
+
+End points
+----------
+
+/gumroad/ping
++++++++++++++
+
+Required query parameters:
+
+    key
+       The Gumjabi API key
+
+Required POST parameters:
+
+    email
+       The purchaser's email. The Kajabi account will be created using
+       this email address.
+
+    permalink
+       The permalink the user followed to make the purchase on
+       Gumroad. This permalink is tied to a Kajabi funnel/offer.
+
+Optional POST parameters:
+
+    First Name
+        The purchaser's first name. If it's not provided then
+        'Friendly' will be used a default. The Kajabi account will be
+        created using this first name.
+
+    Last Name
+        The purchaser's last name. If it's not provided then 'Human'
+        will be used a default. The Kajabi account will be created
+        using this last name.
+
+Example::
+
+    curl -w '\n' \
+    -d "First%20Name=Andres" \
+    -d "Last%20Name=Buritica" \
+    -d "email=andres@thelinuxkid.com" \
+    -d "price=100" \
+    -d "permalink=andres_link" \
+    "http://localhost:8080/gumroad/ping?key=1234"
+
+The ``First Name`` and ``Last Name`` optional parameters come from
+custom fields set in the permalink's user purchase form.
+
+Installation
+============
+
+System dependencies
+-------------------
+
+    - Python 2.7
+    - MongoDB 2.2.0
+
+Python external dependencies
+----------------------------
+
+    - build-essential
+    - python-dev
+    - python-setuptools
+    - python-virtualenv
+
+Setup
+-----
+
+To install Gumjabi run the following commands from the project's base
+directory. You can download the source code from github_::
+
+    virtualenv .virtual
+    .virtual/bin/python setup.py install
+    # At this point, gumjabi will already be in easy-install.pth.
+    # So, pip will not attempt to download it
+    .virtual/bin/pip install gumjabi[test]
+
+    # The test requirement installs all the dependencies. But,
+    # depending on the service you wish to run you might want to install
+    # only the appropriate dependencies as listed in setup.py. For
+    # example to run kajabi-queue you only need the mongo and web
+    # requirements which install the pymongo and requests dependencies
+    .virtual/bin/pip install gumjabi[web,mongo]
+
+Running
+=======
+
+It is recommended that you use an init daemon such as upstart_ or
+runit_ to run the Gumjabi services.
+
+REST API
+--------
 
 To start the API call the ``gumjabi-api`` command with the
 ``--config`` and ``--db-config`` arguments::
@@ -38,8 +137,8 @@ To start the API call the ``gumjabi-api`` command with the
 
 Use ``ssl-pem`` if you want to run the API with SSL enabled. If you
 want to restrict the hosts which can make requests to the API set
-``restrict-hosts`` to true (see `Database structures`_ below). Neither
-option is required.
+``restrict-hosts`` to true (see `Database structures`_
+section). Neither option is required.
 
 ``mongodb.conf`` looks like::
 
@@ -54,30 +153,37 @@ option is required.
 
 The ``replica-set`` option is not necessary. If you are not using a
 replica set in your MongoDB setup omit this line. The collections used
-here are described in the `Database structures`_ section below.
+here are described in the `Database structures`_ section.
 
-Account creation service
-------------------------
+Refer to the `Usage`_ section for information on how to make requests
+to this API.
 
-To monitor the queue which contains the Kajabi accounts to create call
-the ``kajabi-queue`` command with the ``--db-config`` argument::
+Account creation queue
+----------------------
+
+To process the requests in the queue and create the Kajabi accounts
+call the ``kajabi-queue`` command with the ``--db-config`` argument::
 
     kajabi-queue --db-config=mongodb.conf
 
 ``mongodb.conf`` looks the same as above.
 
+``kajabi-queue`` will retry failed account creation requests a few
+times before giving up. It will also restart every 5 to 10 seconds to
+look for new items in the queue.
 
 .. _dbstructures:
 
 Database structures
 -------------------
 
-Gumjabi uses two MongoDB collections. The system uses the names
-kajabi-queue and gumjabi-keys which are defined in
+Gumjabi uses two MongoDB collections. The code uses the names
+``kajabi-queue`` and ``gumjabi-keys`` which are defined in
 ``gumjabi-api.conf`` but you can name the actual collections anything
-you want. kajabi-queue is used as a queue for the Kajabi accounts that
-are to be created. gumjabi-keys holds Gumroad and Kajabi information
-for each user and must be pre-populated. For example::
+you want. ``kajabi-queue`` is used as a queue for the Kajabi accounts that
+are to be created. ``gumjabi-keys`` holds the Gumroad and Kajabi
+information for each user and must be pre-populated. A Gumjabi user is
+identified by their Gumjabi API key. For example::
 
     {
       "_id": "1234",
@@ -111,10 +217,13 @@ Fields:
       The Kajabi notification URL tied to this Gumjabi API key
 
     hosts:
-      A list of hosts. If the restrict-hosts option is set in the API any request using this Gumjabi API key from hosts outside this list will be denied
+      A list of hosts. If the ``restrict-hosts`` option is set in
+      ``gumjabi-api`` then any request using this Gumjabi API key and
+      coming from hosts outside this list will be denied
 
     disabled:
-      true of false. If set to false any request using this Gumjabi API key will be denied
+      true of false. If set to false any request using this Gumjabi
+      API key will be denied
 
     links:
       A dictionary with Gumroad permalinks as keys
@@ -125,49 +234,28 @@ Fields:
     kajabi_offer:
      The Kajabi offer tied to this Gumroad permalink
 
-Usage
-=====
-
-Installation
-============
+A SHA-256 function or greater is recommended when creating the Gumjabi
+API keys.
 
 Developing
 ==========
 
-External dependencies
----------------------
+To start developing follow the instructions in the Installation_
+section but replace::
 
-    - build-essential
-    - python-dev
-    - python-setuptools
-    - python-virtualenv
+    .virtual/bin/python setup.py install
 
-Setup
------
+with::
 
-To start developing run the following commands from the project's base
-directory. You can download the source from github_::
-
-    # I like to install the virtual environment in a hidden repo.
-    virtualenv .virtual
-    # I leave the magic to Ruby developers (.virtual/bin/activate)
     .virtual/bin/python setup.py develop
-    # At this point, gumjabi will already be in easy-install.pth.
-    # So, pip will not attempt to download it
-    .virtual/bin/pip install gumjabi[test]
-
-    # The test requirement installs all the dependencies. But,
-    # depending on the cli you wish to run you might want to install
-    # only the appropriate dependencies as listed in setup.py. For
-    # example to run kajabi-queue you need the mongo and web
-    # requirements which install the pymongo and requests dependencies
-    .virtual/bin/pip install gumjabi[web,mongo]
 
 If you like to use ipython you can install it with the dev
 requirement::
 
     .virtual/bin/pip install gumjabi[dev]
 
+.. _runit: http://smarden.org/runit/
+.. _upstart: http://upstart.ubuntu.com/
 .. _github: https://github.com/thelinuxkid/gumjabi
 .. _`Gumroad Ping API`: https://gumroad.com/ping
 .. _`Kajabi's custom cart integration`: http://help.kajabi.com/customer/portal/articles/735181-how-do-i-setup-a-custom-shopping-cart-
