@@ -53,7 +53,7 @@ def main():
     config = config_parser(args.config)
     host = config.get('connection', 'host')
     port = config.get('connection', 'port')
-    pem = config_option(config.get, 'connection', 'ssl_pem')
+    pem = config_option(config.get, 'connection', 'ssl-pem')
     colls = collections(
         config=args.db_config,
         )

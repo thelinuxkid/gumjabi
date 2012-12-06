@@ -31,12 +31,12 @@ To start the API call the ``gumjabi-api`` command with the
       [connection]
       host = <hostname>
       port = <port>
-      ssl_pem = <path_to_certificate>
+      ssl-pem = <path_to_certificate>
 
       [api]
       restrict-hosts = <true|false>
 
-Use ``ssl_pem`` if you want to run the API with SSL enabled. If you
+Use ``ssl-pem`` if you want to run the API with SSL enabled. If you
 want to restrict the hosts which can make requests to the API set
 ``restrict-hosts`` to true (see `Database structures`_ below). Neither
 option is required.
