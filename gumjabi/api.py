@@ -198,13 +198,11 @@ class EventAPI01(object):
     @json_content
     def gumroad_webhook(self, **kwargs):
         form = bottle.request.forms
-        email = form.get('email')
-        price = form.get('price')
-        currency = form.get('currency')
-        first_name = form.get('First Name')
-        last_name = form.get('Last Name')
-        test = form.get('test')
-        link = form.get('permalink')
+        email = form.pop('email', None)
+        first_name = form.pop('First Name', None)
+        last_name = form.pop('Last Name', None)
+        test = form.pop('test', None)
+        link = form.pop('permalink', None)
         gumjabi_key = kwargs['request_key']
         dbkey = self._keys_coll.find_one({'_id': gumjabi_key})
         dblink = dbkey['links'].get(link)
@@ -255,16 +253,14 @@ class EventAPI01(object):
                 email=email,
             )
         )
-        self._queue_coll.insert(
-            dict([
+        item = dict([
                 ('gumjabi_key', gumjabi_key),
                 ('email', email),
                 ('first_name', first_name),
                 ('last_name', last_name),
-                ('link', link),
+                ('gumroad_link', link),
                 ('requested_on', datetime.utcnow()),
-                ('price', price),
-                ('currency', currency),
-                ]),
-            )
+        ])
+        item.update(**form)
+        self._queue_coll.insert(item)
         return api_response('Success')

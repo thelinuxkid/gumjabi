@@ -74,15 +74,15 @@ def create_one(colls, item, session):
     email = item.get('email')
     first_name = item.get('first_name')
     last_name = item.get('last_name')
-    link = item.get('link')
+    gmrd_link = item.get('gumroad_link')
     gumjabi_key = item.get('gumjabi_key')
 
-    if not (email and first_name and last_name and link):
+    if not (email and first_name and last_name and gmrd_link):
         missing = dict([
             ('email', email),
             ('first_name', first_name),
             ('last_name', last_name),
-            ('link', link),
+            ('gumroad_link', gmrd_link),
         ])
         msg = 'Found incomplete request in queue {missing}'.format(
             missing=json.dumps(missing)
@@ -124,34 +124,43 @@ def create_one(colls, item, session):
         _log_retry_error(msg)
         _mark_for_retry(colls, item, msg)
         return False
-    dblink = dbkey['links'].get(link)
+    dblink = dbkey['links'].get(gmrd_link)
     if not dblink:
-        msg = 'Could not find Gumroad link {link}'.format(
-            link=link,
+        msg = 'Could not find Gumroad link {gmrd_link}'.format(
+            gmrd_link=gmrd_link,
         )
         _log_retry_error(msg)
         _mark_for_retry(colls, item, msg)
         return False
     kajabi = dblink.get('kajabi')
     if not kajabi:
-        msg = 'Could not find kajabi info for link {link}'.format(
-            link=link,
+        msg = (
+            'Could not find Kajabi info for Gumroad link '
+            '{gmrd_link}'.format(
+                gmrd_link=gmrd_link,
+            )
         )
         _log_retry_error(msg)
         _mark_for_retry(colls, item, msg)
         return False
     funnel = kajabi.get('funnel')
     if not funnel:
-        msg = 'Could not find a funnel for link {link}'.format(
-            link=link,
+        msg = (
+            'Could not find a Kajabi funnel for Gumroad link '
+            '{gmrd_link}'.format(
+                gmrd_link=gmrd_link,
+            )
         )
         _log_retry_error(msg)
         _mark_for_retry(colls, item, msg)
         return False
     offer = kajabi.get('offer')
     if not offer:
-        msg = 'Could not find an offer for link {link}'.format(
-            link=link,
+        msg = (
+            'Could not find a Kajabi offer for Gumroad link '
+            '{gmrd_link}'.format(
+                gmrd_link=gmrd_link,
+            )
         )
         _log_retry_error(msg)
         _mark_for_retry(colls, item, msg)
@@ -166,21 +175,21 @@ def create_one(colls, item, session):
         ('first_name', first_name),
         ('last_name', last_name),
     ])
-    log.info(
-        'Creating Kajabi account for email {email} and link '
-        '{link}'.format(
+    log.debug(
+        'Creating Kajabi account for email {email} and Gumroad link '
+        '{gmrd_link}'.format(
             email=email,
-            link=link,
+            gmrd_link=gmrd_link,
         )
     )
     res = session.post(url, params=params)
     if res.text != '1' or res.status_code != 200:
         msg = (
             'Kajabi account creation for email {email}, '
-            'and link {link} failed with status code '
+            'and Gumroad link {gmrd_link} failed with status code '
             '{code}'.format(
                 email=email,
-                link=link,
+                gmrd_link=gmrd_link,
                 code=res.status_code,
                 )
             )
@@ -189,9 +198,9 @@ def create_one(colls, item, session):
         return False
     log.debug(
         'Received an OK response from Kajabi while creating an '
-        'account for {email} and link {link}'.format(
+        'account for {email} and Gumroad link {gmrd_link}'.format(
             email=email,
-            link=link,
+            gmrd_link=gmrd_link,
         )
     )
     return True
