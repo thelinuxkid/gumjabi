@@ -132,18 +132,7 @@ def create_one(colls, item, session):
         _log_retry_error(msg)
         _mark_for_retry(colls, item, msg)
         return False
-    kajabi = dblink.get('kajabi')
-    if not kajabi:
-        msg = (
-            'Could not find Kajabi info for Gumroad link '
-            '{gmrd_link}'.format(
-                gmrd_link=gmrd_link,
-            )
-        )
-        _log_retry_error(msg)
-        _mark_for_retry(colls, item, msg)
-        return False
-    funnel = kajabi.get('funnel')
+    funnel = dblink.get('kajabi_funnel')
     if not funnel:
         msg = (
             'Could not find a Kajabi funnel for Gumroad link '
@@ -154,7 +143,7 @@ def create_one(colls, item, session):
         _log_retry_error(msg)
         _mark_for_retry(colls, item, msg)
         return False
-    offer = kajabi.get('offer')
+    offer = dblink.get('kajabi_offer')
     if not offer:
         msg = (
             'Could not find a Kajabi offer for Gumroad link '

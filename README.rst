@@ -77,29 +77,53 @@ kajabi-queue and gumjabi-keys which are defined in
 ``gumjabi-api.conf`` but you can name the actual collections anything
 you want. kajabi-queue is used as a queue for the Kajabi accounts that
 are to be created. gumjabi-keys holds Gumroad and Kajabi information
-for each user and must be pre-populated.::
+for each user and must be pre-populated. For example::
 
     {
-      "_id": <Gumroad-API-key>,
-      "kajabi_key": <Kajabi-API-key>,
-      "kajabi_url": <Kajabi-API-URL>,
+      "_id": "1234",
+      "kajabi_key": "1357",
+      "kajabi_url": "http://foo.kajabi.com/order_notifications",
       "meta": {
         "hosts": [
-          <Gumroad-host>,
-          ...
+          "23.20.142.110",
+          "23.22.199.140",
         ],
-        "disabled": <true|false>,
+        "disabled": "true",
       },
       "links": {
-        <Gumroad-link>: {
-          "kajabi": {
-            "funnel": <Kajabi-funnel>,
-            "offer": <Kajabi-offer>
+        "ZUqn": {
+          "kajabi_funnel": "11223",
+          "kajabi_offer": "44556",
           }
         },
-        ...
       }
     }
+
+Fields:
+
+    _id
+      The Gumjabi API key
+
+    kajabi_key:
+      The Kajabi API key tied to this Gumjabi API key
+
+    kajabi_url
+      The Kajabi notification URL tied to this Gumjabi API key
+
+    hosts:
+      A list of hosts. If the restrict-hosts option is set in the API any request using this Gumjabi API key from hosts outside this list will be denied
+
+    disabled:
+      true of false. If set to false any request using this Gumjabi API key will be denied
+
+    links:
+      A dictionary with Gumroad permalinks as keys
+
+    kajabi_funnel:
+     The Kajabi funnel tied to this Gumroad permalink
+
+    kajabi_offer:
+     The Kajabi offer tied to this Gumroad permalink
 
 Usage
 =====
