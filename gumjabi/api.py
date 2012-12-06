@@ -219,15 +219,15 @@ class EventAPI01(object):
         first_name = form.pop('First Name', None)
         last_name = form.pop('Last Name', None)
         test = form.pop('test', None)
-        link = form.pop('permalink', None)
+        gumroad_link = form.pop('permalink', None)
         gumjabi_key = kwargs['request_key']
         dbkey = self._keys_coll.find_one({'_id': gumjabi_key})
-        dblink = dbkey['links'].get(link)
+        dblink = dbkey['links'].get(gumroad_link)
 
         # None and empty are both bad
-        if not link:
+        if not gumroad_link:
             self._log_gumroad_param_error(
-                param='a link',
+                param='a permalink',
                 form=form,
             )
             raise bottle.HTTPError(
@@ -235,12 +235,15 @@ class EventAPI01(object):
                 body='Parameter missing: permalink',
             )
         if not dblink:
-            msg = 'Could not find Gumroad link {link}'.format(
-                    link=link,
+            msg = (
+                'Could not find Gumroad link '
+                '{gumroad_link}'.format(
+                    gumroad_link=gumroad_link,
+                )
             )
             log.error(msg)
-            body = 'Invalid permalink: {link}'.format(
-                    link=link,
+            body = 'Invalid permalink: {gumroad_link}'.format(
+                    gumroad_link=gumroad_link,
             )
             raise bottle.HTTPError(
                 status=400,
@@ -265,9 +268,10 @@ class EventAPI01(object):
             log.debug('Test request successful')
             return api_response('Test successful')
         log.debug(
-            'Queueing {email} for Kajabi account '
-            'creation'.format(
+            'Queueing email {email} and Gumroad link '
+            '{gumroad_link} for Kajabi account creation'.format(
                 email=email,
+                gumroad_link=gumroad_link,
             )
         )
         item = dict([
@@ -275,7 +279,7 @@ class EventAPI01(object):
                 ('email', email),
                 ('first_name', first_name),
                 ('last_name', last_name),
-                ('gumroad_link', link),
+                ('gumroad_link', gumroad_link),
                 ('requested_on', datetime.utcnow()),
         ])
         item.update(**form)
