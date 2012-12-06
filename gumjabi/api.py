@@ -3,7 +3,10 @@ import logging
 import bottle
 import functools
 
+from collections import OrderedDict
 from datetime import datetime
+from urlparse import urlparse, urlunparse, parse_qsl
+from urllib import urlencode
 
 from paste import httpserver
 from paste.translogger import TransLogger
@@ -14,6 +17,19 @@ DEFAULT_FIRST_NAME = 'Friendly'
 DEFAULT_LAST_NAME = 'Human'
 
 class APILogger(TransLogger):
+    def _trim_uri(self, req_uri):
+        """ Hide the API key in the query string
+        """
+        parts = urlparse(req_uri)
+        # Keep query args in original order
+        query = OrderedDict(parse_qsl(parts.query))
+        if 'key' in query:
+            query['key'] = query['key'][-5:]
+        query = urlencode(query)
+        parts = parts._replace(query=query)
+        trimmed_uri = urlunparse(parts)
+        return trimmed_uri
+
     def write_log(
         self,
         environ,
@@ -27,12 +43,13 @@ class APILogger(TransLogger):
         protocol = environ['SERVER_PROTOCOL']
         referer = environ.get('HTTP_REFERER', '-')
         user_agent = environ.get('HTTP_USER_AGENT', '-')
-        msg = ('{remote_addr} {method} {req_uri} {protocol} {status} '
+        trimmed_uri = self._trim_uri(req_uri)
+        msg = ('{remote_addr} {method} {trimmed_uri} {protocol} {status} '
                '{bytes_} {referer} {user_agent}'
                ).format(
             remote_addr=remote_addr,
             method=method,
-            req_uri=req_uri,
+            trimmed_uri=trimmed_uri,
             protocol=protocol,
             status=status,
             bytes_=bytes_,
