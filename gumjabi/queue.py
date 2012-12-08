@@ -124,7 +124,7 @@ def create_one(colls, item, session):
         _log_retry_error(msg)
         _mark_for_retry(colls, item, msg)
         return False
-    dblink = dbkey['links'].get(gumroad_link)
+    dblink = dbkey['gumroad_links'].get(gumroad_link)
     if not dblink:
         msg = (
             'Could not find Gumroad link {gumroad_link}'.format(

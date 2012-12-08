@@ -222,7 +222,7 @@ class EventAPI01(object):
         gumroad_link = form.pop('permalink', None)
         gumjabi_key = kwargs['request_key']
         dbkey = self._keys_coll.find_one({'_id': gumjabi_key})
-        dblink = dbkey['links'].get(gumroad_link)
+        dblink = dbkey['gumroad_links'].get(gumroad_link)
 
         # None and empty are both bad
         if not gumroad_link:

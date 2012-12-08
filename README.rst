@@ -197,7 +197,7 @@ user is identified by their Gumjabi API key. For example::
         ],
         "disabled": "true",
       },
-      "links": {
+      "gumroad_links": {
         "ZUqn": {
           "kajabi_funnel": "11223",
           "kajabi_offer": "44556",
@@ -226,7 +226,7 @@ Fields:
       true of false. If set to false any request using this Gumjabi
       API key will be denied
 
-    links:
+    gumroad_links:
       A dictionary with Gumroad permalinks as keys
 
     kajabi_funnel:
