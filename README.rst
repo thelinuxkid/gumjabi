@@ -15,8 +15,8 @@ Kajabi can use Gumjabi to automatically create an account for each
 purchaser and give them access to a Kajabi funnel/offer.
 
 Gumjabi is made up of two services. The `REST API`_ listens for POST
-requests from the Gumroad Ping API and puts the information provided
-in a queue. The `Account creation service`_ processes the requests in the
+requests from Gumroad and puts the information provided in a
+queue. The `Account creation service`_ processes the requests in the
 queue creating a Kajabi account with access to a funnel/offer for
 each. You must be familiar with the `Gumroad Ping API`_ and `Kajabi's
 custom cart integration`_ in order to use Gumjabi.
@@ -27,8 +27,8 @@ systems.
 Usage
 =====
 
-To use Gumjabi you must setup the `Gumroad Ping API`_ with the Gumjabi
-API URl using the endpoint /gumroad/ping. This endpoint expects the
+To use Gumjabi you must setup the `Gumroad Ping API`_ with a Gumjabi
+API URL that has the endpoint /gumroad/ping. This endpoint expects a
 Gumjabi API key in the query string and any fields provided by Gumroad
 as POST form parameters.
 
@@ -131,7 +131,7 @@ and ``--db-config`` arguments::
 ``gumjabi-api.conf`` looks like::
 
       [connection]
-      host = <hostname>
+      host = <host>
       port = <port>
       ssl-pem = <path_to_certificate>
 
@@ -146,7 +146,7 @@ section). Neither option is required.
 ``mongodb.conf`` looks like::
 
     [connection]
-    host = <hostname>:<port>
+    host = <host>:<port>
     replica-set = <replicaset-name>
     database = <database-name>
 
@@ -161,8 +161,9 @@ used here are described in the `Database structures`_ section.
 Account creation service
 ------------------------
 
-To process the requests in the queue and create the Kajabi accounts
-call the ``kajabi-queue`` cli with the ``--db-config`` argument::
+To process the requests in the queue creating the Kajabi accounts and
+giving each account access to a funnel/offer call the ``kajabi-queue``
+cli with the ``--db-config`` argument::
 
     .virtual/bin/kajabi-queue --db-config=mongodb.conf
 
@@ -180,10 +181,10 @@ Database structures
 Gumjabi uses two MongoDB collections. The code uses the names
 ``kajabi-queue`` and ``gumjabi-keys`` which are defined in
 ``gumjabi-api.conf`` but you can name the actual collections anything
-you want. ``kajabi-queue`` is used as a queue for the Kajabi accounts that
-are to be created. ``gumjabi-keys`` holds the Gumroad and Kajabi
-information for each user and must be pre-populated. A Gumjabi user is
-identified by their Gumjabi API key. For example::
+you want. ``kajabi-queue`` is used as a queue for the Kajabi accounts
+that are to be created. ``gumjabi-keys`` holds the Gumroad and Kajabi
+information for each Gumjabi user and must be pre-populated. A Gumjabi
+user is identified by their Gumjabi API key. For example::
 
     {
       "_id": "1234",
