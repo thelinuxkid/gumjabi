@@ -275,12 +275,15 @@ class EventAPI01(object):
             )
         )
         item = dict([
-                ('gumjabi_key', gumjabi_key),
-                ('email', email),
-                ('first_name', first_name),
-                ('last_name', last_name),
-                ('gumroad_link', gumroad_link),
+            ('gumjabi_key', gumjabi_key),
+            ('email', email),
+            ('first_name', first_name),
+            ('last_name', last_name),
+            ('gumroad_link', gumroad_link),
+            ('meta', dict([
                 ('requested_on', datetime.utcnow()),
+            ]),
+         ),
         ])
         item.update(**form)
         self._queue_coll.insert(item)

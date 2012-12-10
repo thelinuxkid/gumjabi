@@ -14,8 +14,8 @@ def _mark_failed(colls, item, msg):
     queue_coll = colls['kajabi-queue']
     kwargs = dict([
         ('$set', dict([
-            ('gave_up_msg', msg),
-            ('gave_up_on', datetime.utcnow()),
+            ('meta.gave_up_msg', msg),
+            ('meta.gave_up_on', datetime.utcnow()),
         ]),
      ),
     ])
@@ -29,7 +29,7 @@ def _mark_successful(colls, item):
     queue_coll = colls['kajabi-queue']
     kwargs = dict([
         ('$set', dict([
-            ('succeeded_on', datetime.utcnow()),
+            ('meta.succeeded_on', datetime.utcnow()),
         ]),
      ),
     ])
@@ -40,7 +40,9 @@ def _mark_successful(colls, item):
     )
 
 def _mark_for_retry(colls, item, msg):
-    retries = item.get('times_failed')
+    retries = item.get('meta')
+    if retries:
+        retries = retries.get('times_failed')
     if retries and retries >= MAX_RETRIES:
         msg = (
             'Queue item {_id} has been tried {max_retries} '
@@ -56,12 +58,12 @@ def _mark_for_retry(colls, item, msg):
     queue_coll = colls['kajabi-queue']
     kwargs = dict([
         ('$inc', dict([
-            ('times_failed', 1),
+            ('meta.times_failed', 1),
         ]),
      ),
         ('$set', dict([
-            ('last_failed_on', datetime.utcnow()),
-            ('last_failed_msg', msg),
+            ('meta.last_failed_on', datetime.utcnow()),
+            ('meta.last_failed_msg', msg),
         ]),
      ),
     ])
@@ -216,10 +218,10 @@ def create_accts(colls, session):
     queue_coll = colls['kajabi-queue']
     cursor = queue_coll.find(
         dict([
-            ('gave_up_on', dict([('$exists', False)])),
+            ('meta.gave_up_on', dict([('$exists', False)])),
         ]),
         sort=[
-            ('requested_on', pymongo.ASCENDING),
+            ('meta.requested_on', pymongo.ASCENDING),
         ],
     )
     work = False
