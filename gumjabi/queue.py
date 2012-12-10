@@ -216,10 +216,17 @@ def create_one(colls, item, session):
 
 def create_accts(colls, session):
     queue_coll = colls['kajabi-queue']
+    gave_up_query = dict([
+        ('meta.gave_up_on', dict([('$exists', False)])),
+    ])
+    requested_query = dict([
+        ('meta.succeeded_on', dict([('$exists', False)])),
+    ])
+    and_query = dict([
+        ('$and', [gave_up_query, requested_query]),
+    ])
     cursor = queue_coll.find(
-        dict([
-            ('meta.gave_up_on', dict([('$exists', False)])),
-        ]),
+        and_query,
         sort=[
             ('meta.requested_on', pymongo.ASCENDING),
         ],
