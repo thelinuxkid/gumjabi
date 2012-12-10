@@ -15,7 +15,21 @@ def _mark_failed(colls, item, msg):
     kwargs = dict([
         ('$set', dict([
             ('gave_up_msg', msg),
-            ('gave_up', datetime.utcnow()),
+            ('gave_up_on', datetime.utcnow()),
+        ]),
+     ),
+    ])
+    mongo.safe_upsert(
+        queue_coll,
+        item['_id'],
+        **kwargs
+    )
+
+def _mark_successful(colls, item):
+    queue_coll = colls['kajabi-queue']
+    kwargs = dict([
+        ('$set', dict([
+            ('succeeded_on', datetime.utcnow()),
         ]),
      ),
     ])
@@ -46,7 +60,7 @@ def _mark_for_retry(colls, item, msg):
         ]),
      ),
         ('$set', dict([
-            ('last_failed', datetime.utcnow()),
+            ('last_failed_on', datetime.utcnow()),
             ('last_failed_msg', msg),
         ]),
      ),
@@ -195,13 +209,14 @@ def create_one(colls, item, session):
             gumroad_link=gumroad_link,
         )
     )
+    _mark_successful(colls, item)
     return True
 
 def create_accts(colls, session):
     queue_coll = colls['kajabi-queue']
     cursor = queue_coll.find(
         dict([
-            ('gave_up', dict([('$exists', False)])),
+            ('gave_up_on', dict([('$exists', False)])),
         ]),
         sort=[
             ('requested_on', pymongo.ASCENDING),
