@@ -11,6 +11,11 @@ from gumjabi.util import mongo
 log = logging.getLogger(__name__)
 
 def _mark_failed(colls, item, msg):
+    log.error(
+        '{msg}. Marking as failed.'.format(
+            msg=msg,
+        )
+    )
     queue_coll = colls['kajabi-queue']
     kwargs = dict([
         ('$set', dict([
@@ -51,10 +56,14 @@ def _mark_for_retry(colls, item, msg):
                 max_retries=MAX_RETRIES,
             )
         )
-        _log_failed_error(msg)
         _mark_failed(colls, item, msg)
         return
 
+    log.error(
+        '{msg}. Marking for retry.'.format(
+            msg=msg,
+        )
+    )
     queue_coll = colls['kajabi-queue']
     kwargs = dict([
         ('$inc', dict([
@@ -72,18 +81,6 @@ def _mark_for_retry(colls, item, msg):
         item['_id'],
         **kwargs
     )
-
-def _log_retry_error(msg):
-    msg = '{msg}. Marking for retry.'.format(
-        msg=msg,
-    )
-    log.error(msg)
-
-def _log_failed_error(msg):
-    msg = '{msg}. Marking as failed.'.format(
-        msg=msg,
-    )
-    log.error(msg)
 
 def create_one(colls, item, session):
     keys_coll = colls['gumjabi-keys']
@@ -103,7 +100,6 @@ def create_one(colls, item, session):
         msg = 'Found incomplete request in queue {missing}'.format(
             missing=json.dumps(missing)
         )
-        _log_failed_error(msg)
         _mark_failed(colls, item, msg)
         return False
     if not gumjabi_key:
@@ -113,7 +109,6 @@ def create_one(colls, item, session):
                 _id=item['_id']
             )
         )
-        _log_failed_error(msg)
         _mark_failed(colls, item, msg)
         return False
 
@@ -126,7 +121,6 @@ def create_one(colls, item, session):
                 _id=item['_id']
             )
         )
-        _log_retry_error(msg)
         _mark_for_retry(colls, item, msg)
         return False
     url = dbkey.get('kajabi_url')
@@ -137,7 +131,6 @@ def create_one(colls, item, session):
                 _id=item['_id']
             )
         )
-        _log_retry_error(msg)
         _mark_for_retry(colls, item, msg)
         return False
     dblink = dbkey['gumroad_links'].get(gumroad_link)
@@ -147,7 +140,6 @@ def create_one(colls, item, session):
                 gumroad_link=gumroad_link,
             )
         )
-        _log_retry_error(msg)
         _mark_for_retry(colls, item, msg)
         return False
     funnel = dblink.get('kajabi_funnel')
@@ -158,7 +150,6 @@ def create_one(colls, item, session):
                 gumroad_link=gumroad_link,
             )
         )
-        _log_retry_error(msg)
         _mark_for_retry(colls, item, msg)
         return False
     offer = dblink.get('kajabi_offer')
@@ -169,7 +160,6 @@ def create_one(colls, item, session):
                 gumroad_link=gumroad_link,
             )
         )
-        _log_retry_error(msg)
         _mark_for_retry(colls, item, msg)
         return False
 
@@ -191,6 +181,7 @@ def create_one(colls, item, session):
     )
     res = session.post(url, params=params)
     if res.text != '1' or res.status_code != 200:
+        # res.text can contain a lot more than just a number
         msg = (
             'Kajabi account creation for email {email} '
             'and Gumroad link {gumroad_link} failed with status code '
@@ -200,7 +191,6 @@ def create_one(colls, item, session):
                 code=res.status_code,
                 )
             )
-        _log_retry_error(msg)
         _mark_for_retry(colls, item, msg)
         return False
     log.debug(
