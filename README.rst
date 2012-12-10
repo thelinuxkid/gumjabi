@@ -94,6 +94,7 @@ Python external dependencies
     - python-dev
     - python-setuptools
     - python-virtualenv
+    - libssl1.0.0
 
 Setup
 -----
