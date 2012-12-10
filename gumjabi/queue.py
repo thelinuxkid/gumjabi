@@ -165,7 +165,7 @@ def create_one(colls, item, session):
 
     # id can be omitted
     params = dict([
-        ('kajabi_key', kajabi_key),
+        ('api_key', kajabi_key),
         ('kjbf', funnel),
         ('kjbo', offer),
         ('email', email),
