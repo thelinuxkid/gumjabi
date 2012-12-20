@@ -52,5 +52,5 @@ def main():
     session = requests.session()
     if not queue.create_accts(colls, session):
         delay = random.randint(5, 10)
-        log.info('No work, sleeping %d seconds...', delay)
+        log.debug('No work, sleeping %d seconds...', delay)
         time.sleep(delay)
