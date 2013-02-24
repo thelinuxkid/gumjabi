@@ -172,7 +172,7 @@ def create_one(colls, item, session):
         ('first_name', first_name),
         ('last_name', last_name),
     ])
-    log.debug(
+    log.info(
         'Creating Kajabi account for email {email} and Gumroad link '
         '{gumroad_link}'.format(
             email=email,
